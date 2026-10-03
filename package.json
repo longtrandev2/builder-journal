@@ -1,6 +1,6 @@
 {
   "name": "builder-journal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Biến git của bạn thành Wrapped kiểu Spotify + devlog tiếng Việt. Local-first, không server.",
   "type": "module",
   "bin": {

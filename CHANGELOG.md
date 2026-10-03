@@ -2,6 +2,14 @@
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/), version theo [SemVer](https://semver.org/).
 
+## [0.1.1] — 2026-10-03
+
+### Fixed
+- Mọi màn Wrapped vừa một màn hình ở 390–1920px; ảnh "Tải ảnh" luôn đúng 1080×1350, không bị cắt, biểu đồ chỉ thu nhỏ một lần.
+- Màn "Bạn đã chỉ đạo" và "Đòn bẩy": so sánh giờ ra lệnh / giờ commit và chuỗi lệnh → commit → dòng chỉ tính trong khoảng có log agent; không có commit trong khoảng đó thì bỏ phần so sánh.
+- Ảnh xuất giữ dòng ghi khoảng ngày của log (theo giờ địa phương), để con số không bị hiểu sai khi chia sẻ.
+- Nhãn giờ trên biểu đồ dễ đọc trên điện thoại; card tuần ghi "Tuần đến …", bố cục gọn hơn.
+
 ## [0.1.0] — 2026-10-03
 
 Bản đầu tiên, làm trong buổi build thứ Bảy đầu tiên.
@@ -19,4 +27,5 @@ Bản đầu tiên, làm trong buổi build thứ Bảy đầu tiên.
 - Che secret trước khi tạo prompt (key, token, chuỗi kết nối, JWT…); bỏ hẳn diff của `.env*`, khóa, chứng chỉ.
 - Trang share không chứa đường dẫn tuyệt đối, email hay chữ nào từ prompt.
 
+[0.1.1]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.1
 [0.1.0]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.0
