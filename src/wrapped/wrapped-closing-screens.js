@@ -8,7 +8,7 @@ const TOP_REPOS = 6;
 /** Deterministic closing line, used when no AI-written sentence is passed in. */
 export function defaultHighlight(data) {
   const { hero, habits, heatmap, displayName } = data;
-  return `${fmtNum(hero.sessions)} lần ngồi xuống code, chuỗi dài nhất ${habits.streak} ngày liền, ` +
+  return `${fmtNum(hero.activeDays)} ngày có mặt, chuỗi dài nhất ${habits.streak} ngày liền, ` +
     `và tuần ${fmtDate(heatmap.peakWeek, false)} bùng nổ với ${heatmap.peakTotal} commit. Đó là mùa build của ${displayName}.`;
 }
 
@@ -16,7 +16,7 @@ export function screenRepos(d) {
   const repos = [...d.repos].sort((a, b) => b.commits - a.commits);
   const max = Math.max(1, repos[0]?.commits || 0);
   const rows = repos.slice(0, TOP_REPOS).map((r, i) => `<div class="bar-row${i === 0 ? ' top' : ''}">
-<div class="bar-text"><span class="bar-label">${e(r.name)}</span><span class="bar-sub">${fmtNum(r.sessions)} buổi, ${fmtNum(r.codeLines)} dòng</span></div>
+<div class="bar-text"><span class="bar-label">${e(r.name)}</span><span class="bar-sub">${fmtNum(r.activeDays)} ngày có mặt, ${fmtNum(r.codeLines)} dòng</span></div>
 <div class="bar-track"><div class="bar-fill" style="width:${Math.max(1, Math.round((r.commits / max) * 100))}%"></div></div>
 <span class="bar-pct num">${fmtNum(r.commits)}</span></div>`).join('');
   const rest = repos.length - TOP_REPOS;

@@ -64,11 +64,11 @@ const inPart = (h, p) => (p.from <= p.to ? h >= p.from && h <= p.to : h >= p.fro
 const WEEKDAYS = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
 
 /**
- * @param period  output of buildPeriod (commits classified, sessions grouped)
+ * @param period  output of periodFromCommits (commits classified)
  * @param options { unit, repoName, displayName }
  */
 export function aggregateWrapped(period, { unit = 'week', repoName, displayName }) {
-  const { commits, sessions, stats } = period;
+  const { commits, stats } = period;
   const first = commits[0].date;
   const last = commits[commits.length - 1].date;
   const t0 = Date.parse(first);
@@ -88,14 +88,13 @@ export function aggregateWrapped(period, { unit = 'week', repoName, displayName 
   }
   const peakHour = hours.indexOf(Math.max(...hours));
   const dayparts = DAYPARTS.map((p) => ({ ...p, count: hours.filter((_, h) => inPart(h, p)).reduce((s, n) => s + n, 0) }));
-  const longestSession = sessions.reduce((a, b) => (b.durationMinutes > a.durationMinutes ? b : a));
 
   return {
     repoName,
     displayName,
     unit,
     range: { from: first, to: last, days: Math.round(span / DAY) + 1 },
-    hero: { sessions: stats.sessions, commits: stats.commits, merges: stats.merges || 0, chapters: stats.chapterCount, codeLines: stats.codeLines },
+    hero: { activeDays: Object.keys(perDay).length, commits: stats.commits, merges: stats.merges || 0, chapters: stats.chapterCount, codeLines: stats.codeLines },
     // Ticks deduped at 0.1% resolution: same picture, ≤1001 lines even for a 5000-commit repo.
     ticks: [...new Set(commits.map((c) => Math.round(((Date.parse(c.date) - t0) / span) * 1000) / 1000))],
     heatmap: buildHeatmap(perDay),
@@ -116,8 +115,6 @@ export function aggregateWrapped(period, { unit = 'week', repoName, displayName 
       dayparts,
       topDaypart: dayparts.reduce((a, b) => (b.count > a.count ? b : a)),
       streak: longestStreak(Object.keys(perDay)),
-      longestSessionMinutes: longestSession.durationMinutes,
-      longestSessionDay: dayKey(longestSession.start),
       busiestWeekday: WEEKDAYS[weekdays.indexOf(Math.max(...weekdays))],
     },
   };

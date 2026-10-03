@@ -74,7 +74,7 @@ function writeWeekly(s, theme, opts) {
     displayName: s.displayName,
     repoName: opts.hideNames ? 'Repo A' : s.name,
     range: { from: period.commits[0].date, to: period.commits[period.commits.length - 1].date },
-    sessions: period.stats.sessions,
+    activeDays: period.stats.activeDays,
     commits: period.stats.commits,
     codeLines: period.stats.codeLines,
     chapters: Object.entries(period.stats.chapters) // already sorted by count desc
@@ -84,7 +84,7 @@ function writeWeekly(s, theme, opts) {
   };
   const file = path.join(s.outDir, `weekly-card-${dateStamp()}.html`);
   fs.writeFileSync(file, renderWeeklyCardHtml(week, { theme }));
-  console.log(`\nTuần của ${s.name}: ${period.stats.sessions} buổi / ${period.stats.commits} commits${ai ? ` / ${ai.prompts} lệnh cho agent` : ''}`);
+  console.log(`\nTuần của ${s.name}: ${period.stats.activeDays} ngày có mặt / ${period.stats.commits} commits${ai ? ` / ${ai.prompts} lệnh cho agent` : ''}`);
   return file;
 }
 
@@ -125,7 +125,7 @@ export async function runWrapped(opts) {
     to: data.range.to,
     ticks: data.ticks,
     stats: [
-      { value: data.hero.sessions, label: 'buổi code' },
+      { value: data.hero.activeDays, label: 'ngày có mặt' },
       { value: data.hero.commits, label: 'commits' },
       { value: data.hero.codeLines, label: 'dòng code đã ship' },
     ],
@@ -133,7 +133,7 @@ export async function runWrapped(opts) {
 
   const h = data.hero;
   console.log(`\n${s.name} · ${fmtRange(data.range.from, data.range.to)}`);
-  console.log(`  ${fmtNum(h.sessions)} buổi · ${fmtNum(h.commits)} commits · ${h.chapters} mảng việc · ${fmtNum(h.codeLines)} dòng code đã ship`);
+  console.log(`  ${fmtNum(h.activeDays)} ngày có mặt · ${fmtNum(h.commits)} commits · ${h.chapters} mảng việc · ${fmtNum(h.codeLines)} dòng code đã ship`);
   if (s.ai) console.log(`  ${fmtNum(s.ai.prompts)} lệnh cho agent · ${fmtNum(Math.round(s.ai.activeMinutes / 60))} giờ làm thật (log từ ${fmtRange(s.ai.range.from, s.ai.range.to)})`);
   if (s.repos) console.log(`  ${s.repos.length} repo: ${s.repos.slice(0, 5).map((r) => r.name).join(', ')}${s.repos.length > 5 ? '…' : ''}`);
   console.log(`\nTrang: ${displayPath(htmlFile)}\nCard SVG (README/blog): ${displayPath(cardFile)} — lên FB thì bấm Tải ảnh trong trang.`);

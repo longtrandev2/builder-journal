@@ -1,6 +1,6 @@
 // Git-only screens (always rendered): opening film strip, hero numbers, calendar, chapters, habits.
 // Each returns a frame spec { id, kicker, icon, moment, body }; see wrapped-screen-frame.js.
-import { escapeHtml as e, fmtNum, fmtDate, fmtRange, fmtDuration, UNIT_LABELS } from '../lib/vn-format.js';
+import { escapeHtml as e, fmtNum, fmtDate, fmtRange, UNIT_LABELS } from '../lib/vn-format.js';
 import { barcodeSvg, heatmapSvg, bucketsSvg, heatmapCapPx, COMPACT_WEEKS } from './wrapped-svg-charts.js';
 import { clockSvg } from './wrapped-clock-charts.js';
 import { count } from './wrapped-screen-frame.js';
@@ -41,9 +41,9 @@ export function screenHero(d) {
     id: 'con-so', kicker: 'Con số của mùa', icon: 'pencil-line', moment: 'hero',
     body: `<div class="hero">
 <div class="hero-main">${count(h.codeLines, 'mega num')}<p class="hero-label">dòng code đã ship</p><p class="hero-note">tính cả code agent viết, chỉ file mã nguồn</p></div>
-<div class="stats">${stat(h.sessions, 'buổi code')}${stat(h.commits, 'commit')}${stat(h.chapters, 'mảng việc')}</div>
+<div class="stats">${stat(h.activeDays, 'ngày có mặt')}${stat(h.commits, 'commit')}${stat(h.chapters, 'mảng việc')}</div>
 </div>
-<p class="note">${h.merges ? `Số commit tính cả ${fmtNum(h.merges)} merge commit. ` : ''}Một buổi là chuỗi commit cách nhau không quá 2 giờ. Dòng code bỏ qua tài liệu, cấu hình, lockfile và bộ kit agent.</p>`,
+<p class="note">${h.merges ? `Số commit tính cả ${fmtNum(h.merges)} merge commit. ` : ''}Dòng code bỏ qua tài liệu, cấu hình, lockfile và bộ kit agent.</p>`,
   };
 }
 
@@ -88,7 +88,6 @@ export function screenHabits(d) {
 <li><span>Giờ cao điểm</span><b>${h.peakHour}h, ${fmtNum(h.peakHourCount)} commit</b></li>
 <li><span>${h.topDaypart.id === 'khuya' ? 'Đêm khuya' : `Buổi ${e(h.topDaypart.label.toLowerCase())}`}</span><b>${pct}% số commit</b></li>
 <li><span>Chuỗi dài nhất</span><b>${fmtNum(h.streak)} ngày liền</b></li>
-<li><span>Buổi dài nhất</span><b>${fmtDuration(h.longestSessionMinutes)}, ngày ${fmtDate(h.longestSessionDay)}</b></li>
 <li><span>Ngày hay code nhất</span><b>${e(h.busiestWeekday)}</b></li>
 </ul></div></div>`,
   };
