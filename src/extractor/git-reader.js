@@ -30,6 +30,7 @@ function renamedPath(raw) {
 /** Parse `git log --numstat --summary` output produced with HEADER_FORMAT. Exported for tests. */
 export function parseLog(text) {
   const commits = [];
+  let order = 0;
   for (const chunk of text.split(REC)) {
     if (!chunk.trim()) continue;
     const [header, ...lines] = chunk.split('\n');
@@ -55,6 +56,7 @@ export function parseLog(text) {
     const counted = numstat.filter((f) => !isNoiseFile(f.path));
     commits.push({
       hash,
+      order: order++, // position in git log output: 0 = branch tip side (topological newest)
       author,
       email,
       date,
@@ -65,7 +67,7 @@ export function parseLog(text) {
       numstat,
     });
   }
-  // Oldest first — grouping and ledgers assume chronological order.
+  // Oldest first by author date (dates can be out of topo order after rebase — use .order for the tip) — grouping and ledgers assume chronological order.
   return commits.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
 }
 
