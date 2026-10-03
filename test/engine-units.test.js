@@ -6,7 +6,6 @@ import { classifyCommit, fileKind } from '../src/extractor/chapter-classifier.js
 import { parseLog, authorArgs, readCommits } from '../src/extractor/git-reader.js';
 import { parseSince, codeInsertions } from '../src/extractor/extract-sessions.js';
 import { makeRepo, commitAt, cleanup } from './helpers/temp-git-repo.js';
-import { chunkByWeek } from '../src/extractor/backfill-seeder.js';
 
 const at = (min) => ({ date: new Date(Date.UTC(2026, 0, 1) + min * 60000).toISOString() });
 
@@ -45,9 +44,15 @@ test('classifier: tests / docs / infra dominate by line weight', () => {
 test('git-reader parses numstat, renames, creates, binary and noise files', () => {
   const R = '\x1e', F = '\x1f';
   const log =
-    `${R}bbb${F}Ln${F}ln@x.vn${F}2026-01-02T10:00:00+07:00${F}second\n\n5\t1\tsrc/{old => new}.js\n-\t-\tlogo.png\n` +
-    `${R}aaa${F}Ln${F}ln@x.vn${F}2026-01-01T10:00:00+07:00${F}first\n\n10\t0\tsrc/a.js\n900\t0\tpackage-lock.json\n create mode 100644 src/a.js\n`;
-  const [first, second] = parseLog(log);
+    `${R}ccc${F}bbb x9${F}Ln${F}ln@x.vn${F}2026-01-03T10:00:00+07:00${F}Merge branch 'feat/x'
+
+` +
+    `${R}bbb${F}aaa${F}Ln${F}ln@x.vn${F}2026-01-02T10:00:00+07:00${F}second\n\n5\t1\tsrc/{old => new}.js\n-\t-\tlogo.png\n` +
+    `${R}aaa${F}${F}Ln${F}ln@x.vn${F}2026-01-01T10:00:00+07:00${F}first\n\n10\t0\tsrc/a.js\n900\t0\tpackage-lock.json\n create mode 100644 src/a.js\n`;
+  const [first, second, merge] = parseLog(log);
+  assert.equal(merge.isMerge, true, 'two parents → merge commit (counted, no own diff)');
+  assert.equal(merge.files, 0);
+  assert.equal(first.isMerge, false);
   assert.equal(first.hash, 'aaa');
   assert.equal(first.numstat[0].status, 'A');
   assert.equal(first.insertions, 10, 'lockfile lines are not "lines written"');
@@ -96,11 +101,18 @@ test('parseSince accepts Nd and YYYY-MM-DD, rejects junk', () => {
   assert.throws(() => parseSince('hôm qua', now), /Không hiểu mốc/);
 });
 
-test('chunkByWeek splits into 7-day buckets and skips empty weeks', () => {
-  const from = '2026-01-01T00:00:00.000Z';
-  const day = (d) => ({ date: new Date(Date.parse(from) + d * 86400000).toISOString() });
-  const chunks = chunkByWeek([day(0), day(6), day(20)], from);
-  assert.equal(chunks.length, 2);
-  assert.equal(chunks[0].commits.length, 2);
-  assert.equal(chunks[1].from.slice(0, 10), '2026-01-15');
+
+test('merge commits count as commits but stay out of chapters, lines and the method split', async () => {
+  const { periodFromCommits } = await import('../src/extractor/extract-sessions.js');
+  const day = (h) => `2026-01-01T${String(h).padStart(2, '0')}:00:00+07:00`;
+  const commits = [
+    { date: day(9), message: 'feat: a', numstat: [{ path: 'src/a.js', ins: 10, del: 0, status: 'A' }], isMerge: false, insertions: 10, deletions: 0 },
+    { date: day(10), message: "Merge branch 'feat/a' into develop", numstat: [], isMerge: true, insertions: 0, deletions: 0 },
+  ];
+  const { stats } = periodFromCommits(commits);
+  assert.equal(stats.commits, 2);
+  assert.equal(stats.merges, 1);
+  assert.deepEqual(stats.chapters, { feature: 1 });
+  assert.equal(stats.codeLines, 10);
+  assert.deepEqual(stats.classifiedBy, { prefix: 1, diff: 0 });
 });

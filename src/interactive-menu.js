@@ -7,9 +7,7 @@ export const MENU_ITEMS = [
   { label: 'Wrapped của repo này', hint: 'trang Wrapped toàn bộ lịch sử repo hiện tại', args: ['wrapped'] },
   { label: 'Wrapped của bạn (mọi repo)', hint: 'gộp mọi repo tìm thấy trong log agent', args: ['wrapped', '--all'] },
   { label: 'Card tuần', hint: '1 màn cho 7 ngày gần nhất, tải ảnh đăng group', args: ['wrapped', '--week'] },
-  { label: 'Viết devlog phần chưa kể', hint: 'từ lần kể trước tới giờ', args: ['last'] },
-  { label: 'Viết devlog cho một khoảng', hint: 'vd 3d hoặc 2026-07-01', args: ['since'], ask: 'Từ mốc nào? (vd 3d, 14d, 2026-07-01) › ' },
-  { label: 'Đã kể tới đâu', hint: 'trạng thái sổ cái, commit chưa kể', args: ['status'] },
+  { label: 'Cập nhật bản mới nhất', hint: 'npm i -g builder-journal@latest', args: ['update'] },
   { label: 'Xem tất cả lệnh và cờ', hint: '--help', args: ['--help'] },
 ];
 

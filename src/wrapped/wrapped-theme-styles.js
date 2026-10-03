@@ -77,9 +77,9 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-off
 .exporting .note.range-note{display:block;font-size:13px;margin-top:10px} /* shared images keep the log date range: numbers without it mislead */
 .exporting .mega{font-size:min(96px,calc(140cqi / var(--len,6)))}.exporting .stat .big{font-size:34px}.exporting h2{font-size:30px}
 .exporting .persona{font-size:30px}.exporting .clock-box{max-width:250px}.exporting .facts{font-size:14px}.exporting .facts li{padding:7px 0}
-.exporting .duel-box{max-width:430px}.exporting .redo{font-size:14px;padding:10px 14px}.exporting .acts li{padding:6px 0}.exporting .act-num{font-size:26px}
+.exporting .duel-box{max-width:430px}.exporting .acts li{padding:6px 0}.exporting .act-num{font-size:26px}
 .exporting .hero{gap:16px}.exporting .lead{font-size:18px}.exporting .stack,.exporting .agent-meta,.exporting .bars{margin-top:16px}
-.exporting .ai-grid .mega{font-size:80px}.exporting .stats{padding-top:12px}.exporting .redo{margin-top:12px}.exporting .duel-box{margin-top:10px}
+.exporting .ai-grid .mega{font-size:80px}.exporting .stats{padding-top:12px}.exporting .duel-box{margin-top:10px}
 .exporting .ai-grid .lead,.exporting.s-chi-dao .lead{margin-top:8px}.exporting .acts{margin-top:10px}.exporting .agent-meta{gap:14px}.exporting .models li{padding:3px 0}
 .exporting .bars{gap:12px}.exporting .bar-row{gap:6px 12px}.exporting .bar-text{display:flex;align-items:baseline;gap:10px}.exporting .bar-track{height:10px}
 .exporting .no-export{visibility:hidden}

@@ -1,20 +1,12 @@
 #!/usr/bin/env node
-// CLI entry: wrapped / last / since / status. Commands load lazily to keep `--help` instant.
-import { Command, InvalidArgumentError } from 'commander';
+// CLI entry: wrapped / update. Commands load lazily to keep `--help` instant.
+import { Command } from 'commander';
 import { createRequire } from 'node:module';
 
 const pkg = createRequire(import.meta.url)('../package.json');
 const program = new Command();
 
 const collect = (value, list) => list.concat(value);
-
-/** --narrator-timeout: whole milliseconds > 0, otherwise a friendly VN error (never NaN → instant timeout). */
-function parseTimeoutMs(value) {
-  if (!/^\d+$/.test(String(value).trim()) || Number(value) <= 0) {
-    throw new InvalidArgumentError('phải là số nguyên dương (mili-giây), ví dụ 180000.');
-  }
-  return Number(value);
-}
 
 /** Run a command; friendly VN errors exit with their code, real bugs print the stack. */
 async function run(load, opts) {
@@ -32,24 +24,9 @@ async function run(load, opts) {
   }
 }
 
-const devlog = () => import('../src/devlog-command.js').then((m) => m.runDevlog);
-
-/** Options shared by the devlog-writing commands. */
-function devlogOptions(cmd) {
-  return cmd
-    .option('--repo <path>', 'repo cần kể (mặc định: thư mục hiện tại)')
-    .option('--author <name>', 'tên/email tác giả trong git (lặp lại được)', collect, [])
-    .option('--hardest <text>', 'trả lời trước câu "Vấp gì nhất?" ("" = bỏ qua)')
-    .option('--narrator <mode>', 'claude | manual', 'claude')
-    .option('--narrative <file>', 'dùng bài AI đã viết sẵn (chế độ thủ công)')
-    .option('--narrator-timeout <ms>', 'giới hạn thời gian chờ claude', parseTimeoutMs, 180000)
-    .option('--extract-only', 'chỉ trích xuất số liệu, không viết bài')
-    .option('-y, --yes', 'đồng ý gửi diff (đã che secret) cho claude ở repo này, không hỏi');
-}
-
 program
   .name('builder-journal')
-  .description('Biến git thành Wrapped kiểu Spotify + devlog tiếng Việt. Số liệu tính trên máy bạn; last/since gửi trích đoạn diff cho claude trên máy bạn (như khi dùng Claude Code), trừ khi --narrator manual; wrapped không gửi gì.')
+  .description('Wrapped cho builder thời AI: đọc git và log agent trên máy bạn, ra trang HTML để xem và tải ảnh. Chạy hoàn toàn trên máy, không gửi gì đi đâu.')
   .version(pkg.version);
 
 program
@@ -63,7 +40,7 @@ program
   .option('--all', 'Wrapped của bạn: mọi repo tìm thấy trong log agent (Claude Code / Codex)')
   .option('--exclude <names>', 'bỏ repo khỏi --all (tên hoặc đường dẫn, phân cách dấu phẩy)', collect, [])
   .option('--include <paths>', 'thêm repo vào --all (đường dẫn, phân cách dấu phẩy)', collect, [])
-  .option('--week', 'card 1 màn cho 7 ngày gần nhất (đi kèm devlog tuần)')
+  .option('--week', 'card 1 màn cho 7 ngày gần nhất')
   .option('--hardest <text>', 'dòng "vấp thật" trên card tuần')
   .option('--ai', 'đọc log agent (Claude Code / Codex) — chỉ số tổng, nhớ lựa chọn')
   .option('--no-ai', 'không đọc log agent (chỉ dùng git), nhớ lựa chọn')
@@ -72,18 +49,10 @@ program
   .option('--no-open', 'không tự mở trình duyệt')
   .action((opts) => run(() => import('../src/wrapped/wrapped-command.js').then((m) => m.runWrapped), opts));
 
-devlogOptions(program.command('last').description('Viết devlog cho phần chưa kể (từ lần kể trước tới giờ)'))
-  .action((opts) => run(devlog, { ...opts, mode: 'last' }));
-
-devlogOptions(program.command('since <when>').description('Viết devlog từ mốc: 3d (3 ngày) hoặc 2026-07-01'))
-  .action((when, opts) => run(devlog, { ...opts, mode: 'since', when }));
-
 program
-  .command('status')
-  .description('Đã kể tới đâu, còn bao nhiêu commit chưa kể')
-  .option('--repo <path>', 'repo cần xem (mặc định: thư mục hiện tại)')
-  .option('--author <name>', 'tên/email tác giả trong git (lặp lại được)', collect, [])
-  .action((opts) => run(() => import('../src/status-command.js').then((m) => m.runStatus), opts));
+  .command('update')
+  .description('Cập nhật builder-journal lên bản mới nhất (npm i -g builder-journal@latest)')
+  .action(() => run(() => import('../src/self-update-command.js').then((m) => m.runSelfUpdate), { current: pkg.version }));
 
 // `bj` alone in a real terminal → numbered menu; scripts/pipes (no TTY) keep the plain help.
 async function main() {

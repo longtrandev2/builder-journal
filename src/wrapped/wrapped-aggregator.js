@@ -95,18 +95,19 @@ export function aggregateWrapped(period, { unit = 'week', repoName, displayName 
     displayName,
     unit,
     range: { from: first, to: last, days: Math.round(span / DAY) + 1 },
-    hero: { sessions: stats.sessions, commits: stats.commits, chapters: stats.chapterCount, codeLines: stats.codeLines },
+    hero: { sessions: stats.sessions, commits: stats.commits, merges: stats.merges || 0, chapters: stats.chapterCount, codeLines: stats.codeLines },
     // Ticks deduped at 0.1% resolution: same picture, ≤1001 lines even for a 5000-commit repo.
     ticks: [...new Set(commits.map((c) => Math.round(((Date.parse(c.date) - t0) / span) * 1000) / 1000))],
     heatmap: buildHeatmap(perDay),
     activeDays: Object.keys(perDay).length,
     classifiedBy: stats.classifiedBy || { prefix: 0, diff: commits.length },
     buckets: Object.entries(buckets).sort((a, b) => a[0].localeCompare(b[0])).map(([key, count]) => ({ key, count })),
+    // % of commits that carry code (merge commits have no chapter of their own).
     chapters: Object.entries(stats.chapters).map(([id, count]) => ({
       id,
       label: CHAPTER_LABELS[id] || id,
       count,
-      percent: Math.round((count / stats.commits) * 100),
+      percent: Math.round((count / Math.max(1, stats.commits - (stats.merges || 0))) * 100),
     })),
     habits: {
       hours,

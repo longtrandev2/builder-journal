@@ -1,5 +1,5 @@
 // Thin wrapper around the git binary: args array (no shell), UTF-8, friendly errors.
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import path from 'node:path';
 
 export class UserFacingError extends Error {
@@ -29,6 +29,35 @@ export function runGit(repo, args, { maxBuffer = 512 * 1024 * 1024 } = {}) {
     throw err;
   }
   return result.stdout;
+}
+
+/**
+ * Async twin of runGit: lets several repos (and the agent-log reading) run at the same time.
+ * Same errors, same flags.
+ */
+export function runGitAsync(repo, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('git', ['-C', repo, '-c', 'core.quotepath=off', ...args], { windowsHide: true });
+    const out = [];
+    let errText = '';
+    child.stdout.on('data', (d) => out.push(d));
+    child.stderr.setEncoding('utf8').on('data', (d) => { errText += d; });
+    child.on('error', (err) => reject(err.code === 'ENOENT' ? new UserFacingError('Không tìm thấy lệnh git — cài git trước nhé.') : err));
+    child.on('close', (code) => {
+      if (code === 0) resolve(Buffer.concat(out).toString('utf8'));
+      else reject(Object.assign(new Error(`git ${args[0]} failed: ${errText.trim()}`), { stderr: errText }));
+    });
+  });
+}
+
+/** Async tryGit: null instead of throwing (except "git missing"). */
+export async function tryGitAsync(repo, args) {
+  try {
+    return (await runGitAsync(repo, args)).trim();
+  } catch (err) {
+    if (err instanceof UserFacingError) throw err;
+    return null;
+  }
 }
 
 /** Same as runGit but returns null instead of throwing (for optional lookups). */
