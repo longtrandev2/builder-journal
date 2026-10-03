@@ -100,6 +100,7 @@ export function aggregateWrapped(period, { unit = 'week', repoName, displayName 
     ticks: [...new Set(commits.map((c) => Math.round(((Date.parse(c.date) - t0) / span) * 1000) / 1000))],
     heatmap: buildHeatmap(perDay),
     activeDays: Object.keys(perDay).length,
+    classifiedBy: stats.classifiedBy || { prefix: 0, diff: commits.length },
     buckets: Object.entries(buckets).sort((a, b) => a[0].localeCompare(b[0])).map(([key, count]) => ({ key, count })),
     chapters: Object.entries(stats.chapters).map(([id, count]) => ({
       id,

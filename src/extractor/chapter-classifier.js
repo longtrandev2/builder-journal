@@ -1,5 +1,7 @@
-// Deterministic "chapter" (kind of work) per commit from DIFF SHAPE — commit messages are never input.
-// Step 1: what kind of files dominate (tests / docs / infra)? Step 2: for source code, the shape rules.
+// Deterministic "chapter" (kind of work) per commit, two signals in order of trust:
+//  1. Conventional-commit prefix (feat:, fix(api):, refactor!: …) — structured, written on purpose.
+//  2. Otherwise DIFF SHAPE: which file kinds dominate, then shape rules for source code.
+// Free-form messages ("update", "fix stuff") are never parsed: only a strict `type(scope)?!?:` prefix counts.
 import { isNoiseFile } from './git-reader.js';
 
 export const CHAPTERS = ['feature', 'fix', 'refactor', 'test', 'docs', 'infra'];
@@ -37,7 +39,24 @@ function shapeChapter(files) {
   return 'feature';
 }
 
-export function classifyCommit(commit) {
+const PREFIX_CHAPTERS = {
+  feat: 'feature', feature: 'feature',
+  fix: 'fix', bugfix: 'fix', hotfix: 'fix',
+  refactor: 'refactor', perf: 'refactor', style: 'refactor',
+  test: 'test', tests: 'test',
+  docs: 'docs', doc: 'docs',
+  chore: 'infra', ci: 'infra', build: 'infra', deps: 'infra',
+};
+const PREFIX_RE = /^\s*([a-z]+)(\([^)]*\))?!?:\s*\S/i;
+
+/** Chapter from a strict conventional-commit prefix, or null (unknown types like revert → null). */
+export function prefixChapter(message) {
+  const m = PREFIX_RE.exec(String(message || ''));
+  return m ? PREFIX_CHAPTERS[m[1].toLowerCase()] || null : null;
+}
+
+/** Diff-shape chapter (used when the message has no recognised prefix). */
+export function shapeChapterOf(commit) {
   const files = commit.numstat || [];
   if (!files.length) return 'infra';
   const weight = { src: 0, test: 0, docs: 0, infra: 0 };
@@ -49,11 +68,23 @@ export function classifyCommit(commit) {
   return shapeChapter(srcFiles.length ? srcFiles : files);
 }
 
-/** Mutates commits with .chapter; returns { chapterName: count } ordered by count desc. */
+/** { chapter, source: 'prefix' | 'diff' } */
+export function classifyWithSource(commit) {
+  const fromPrefix = prefixChapter(commit.message);
+  return fromPrefix ? { chapter: fromPrefix, source: 'prefix' } : { chapter: shapeChapterOf(commit), source: 'diff' };
+}
+
+export function classifyCommit(commit) {
+  return classifyWithSource(commit).chapter;
+}
+
+/** Mutates commits with .chapter + .chapterSource; returns { chapterName: count } ordered by count desc. */
 export function classifyAll(commits) {
   const counts = {};
   for (const c of commits) {
-    c.chapter = classifyCommit(c);
+    const { chapter, source } = classifyWithSource(c);
+    c.chapter = chapter;
+    c.chapterSource = source;
     counts[c.chapter] = (counts[c.chapter] || 0) + 1;
   }
   return Object.fromEntries(Object.entries(counts).sort((a, b) => b[1] - a[1]));
