@@ -1,6 +1,6 @@
 // Agent-era screens, rendered only when data.ai / data.leverage exist (Claude Code / Codex logs).
 // Privacy: only aggregate counts reach this file; no prompt text is ever rendered.
-import { escapeHtml as e, fmtNum, fmtDate, fmtRange, fmtDecimal, fmtCompact, fmtHours, fmtDuration } from '../lib/vn-format.js';
+import { escapeHtml as e, fmtNum, fmtDate, fmtRange, fmtDecimal, fmtCompact, fmtHours, fmtDuration, localIsoDate } from '../lib/vn-format.js';
 import { icon } from '../vendor/lucide-icons.js';
 import { hourDuelSvg } from './wrapped-clock-charts.js';
 import { count } from './wrapped-screen-frame.js';
@@ -11,7 +11,7 @@ const peakOf = (arr) => arr.indexOf(Math.max(...arr));
 /** "Theo log Claude Code trên máy, từ 07/09 đến 03/10/2026." — AI history only covers local logs. */
 export function aiRangeNote(ai) {
   const names = (ai.sources || []).map((s) => SOURCE_LABELS[s] || s).join(' và ') || 'agent';
-  return `Số liệu agent đọc từ log ${e(names)} còn trên máy, từ ${fmtRange(ai.range.from, ai.range.to, ' đến ')}. ` +
+  return `Số liệu agent đọc từ log ${e(names)} còn trên máy, từ ${fmtRange(localIsoDate(ai.range.from), localIsoDate(ai.range.to), ' đến ')}. ` +
     'Claude Code tự xoá log cũ sau khoảng 30 ngày, nên phần này chỉ phủ khoảng đó.';
 }
 
@@ -23,12 +23,16 @@ function stat(value, label) {
 export function screenDirect(d) {
   const ai = d.ai;
   const pPeak = Number.isInteger(ai.peakPromptHour) ? ai.peakPromptHour : peakOf(ai.promptHours);
-  // Same window as the prompts (agent-log range), never the whole git history.
-  const commitHours = ai.commitHours || d.habits.hours;
-  const cPeak = commitHours.indexOf(Math.max(...commitHours));
-  const contrast = pPeak === cPeak
-    ? `Ra lệnh và ship cùng một khung giờ: <b>${pPeak}h</b>.`
-    : `Ra lệnh nhiều nhất lúc <b>${pPeak}h</b>, ship nhiều nhất lúc <b>${cPeak}h</b>.`;
+  // Same window as the prompts (agent-log range), never the whole git history. No commits in that
+  // window (ai.commitHours null) → show the prompt side only, never a misleading comparison.
+  const hasCommits = Array.isArray(ai.commitHours);
+  const commitHours = hasCommits ? ai.commitHours : Array(24).fill(0);
+  const cPeak = peakOf(commitHours);
+  const contrast = !hasCommits
+    ? `Ra lệnh nhiều nhất lúc <b>${pPeak}h</b>. Trong khoảng có log chưa có commit nào.`
+    : pPeak === cPeak
+      ? `Ra lệnh và ship cùng một khung giờ: <b>${pPeak}h</b>.`
+      : `Ra lệnh nhiều nhất lúc <b>${pPeak}h</b>, ship nhiều nhất lúc <b>${cPeak}h</b>.`;
   const redo = ai.corrections
     ? `Bạn đã bảo agent <b>làm lại ${fmtNum(ai.corrections)} lần</b>. Cứ khoảng ${fmtNum(Math.max(1, Math.round(ai.prompts / ai.corrections)))} lệnh lại có một lần nói lại, agent nào cũng cần được nhắc.`
     : 'Chưa lần nào phải bảo agent làm lại. Hiếm lắm đấy.';
@@ -42,9 +46,9 @@ export function screenDirect(d) {
 </div>
 <p class="redo">${icon('rotate-ccw')}<span>${redo}</span></p></div>
 <div><figure class="duel-box">${hourDuelSvg(ai.promptHours, commitHours)}
-<figcaption class="legend"><span class="key up">lệnh cho agent</span><span class="key down">commit</span></figcaption></figure>
+<figcaption class="legend"><span class="key up">lệnh cho agent</span>${hasCommits ? '<span class="key down">commit</span>' : ''}</figcaption></figure>
 <p class="lead">${contrast}</p></div></div>
-<p class="note">${aiRangeNote(ai)}</p>`,
+<p class="note range-note">${aiRangeNote(ai)}</p>`,
   };
 }
 

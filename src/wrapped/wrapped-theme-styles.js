@@ -74,6 +74,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-off
 [data-theme="giay"] .exporting::before{left:12px}
 .exporting .body{padding:16px 0}
 .exporting .note{display:none}
+.exporting .note.range-note{display:block;font-size:13px;margin-top:10px} /* shared images keep the log date range: numbers without it mislead */
 .exporting .mega{font-size:min(96px,calc(140cqi / var(--len,6)))}.exporting .stat .big{font-size:34px}.exporting h2{font-size:30px}
 .exporting .persona{font-size:30px}.exporting .clock-box{max-width:250px}.exporting .facts{font-size:14px}.exporting .facts li{padding:7px 0}
 .exporting .duel-box{max-width:430px}.exporting .redo{font-size:14px;padding:10px 14px}.exporting .acts li{padding:6px 0}.exporting .act-num{font-size:26px}
