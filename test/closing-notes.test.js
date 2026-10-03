@@ -121,3 +121,14 @@ test('F1 second half follows the ship hour (catalog wording)', () => {
   assert.match(f1(9, 15), /Hai ca lệch nhau mà vẫn ăn ý\./);
   assert.equal(f1(10, 12), undefined, 'gap < 4h stays silent');
 });
+
+test('S7 fires for prompt peaks in the small hours too; N1 wording follows the scope', async () => {
+  const RULES = NOTE_RULES;
+  const s7 = RULES.find((r) => r.id === 'S7');
+  assert.equal(s7.when({ peakPromptHour: 1 }), true);
+  assert.equal(s7.when({ peakPromptHour: 23 }), true);
+  assert.equal(s7.when({ peakPromptHour: 16 }), false);
+  const n1 = RULES.find((r) => r.id === 'N1');
+  assert.equal(n1.vars({ repos: 6 }).where, 'bạn');
+  assert.equal(n1.vars({}).where, 'repo này');
+});
