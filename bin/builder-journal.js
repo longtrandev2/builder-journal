@@ -85,4 +85,16 @@ program
   .option('--author <name>', 'tên/email tác giả trong git (lặp lại được)', collect, [])
   .action((opts) => run(() => import('../src/status-command.js').then((m) => m.runStatus), opts));
 
-program.parseAsync(process.argv);
+// `bj` alone in a real terminal → numbered menu; scripts/pipes (no TTY) keep the plain help.
+async function main() {
+  if (process.argv.length <= 2 && process.stdin.isTTY && process.stdout.isTTY) {
+    const { runMenu } = await import('../src/interactive-menu.js');
+    const args = await runMenu();
+    if (!args) return;
+    await program.parseAsync([process.argv[0], process.argv[1], ...args]);
+    return;
+  }
+  await program.parseAsync(process.argv);
+}
+
+main();
