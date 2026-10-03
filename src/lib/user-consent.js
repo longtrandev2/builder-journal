@@ -1,12 +1,10 @@
-// Ask-once consent for the two privacy-sensitive features, remembered so nobody is nagged twice:
+// Ask-once consent for the privacy-sensitive feature, remembered so nobody is nagged twice:
 //  1. reading local agent logs (global, ~/.builder-journal/config.json)
-//  2. sending redacted diff excerpts to `claude` for the devlog (per repo, .journal/config.json)
 // Non-interactive shells never get a prompt: the safe choice applies and a hint explains the flag.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline/promises';
-import { saveConfig } from './journal-config.js';
 
 const GLOBAL_DIR = path.join(os.homedir(), '.builder-journal');
 const GLOBAL_FILE = path.join(GLOBAL_DIR, 'config.json');
@@ -68,29 +66,6 @@ export async function ensureAiLogConsent(opts, { ask = askTerminal, interactive 
     'Chỉ lấy số tổng, không có chữ nào từ prompt lên trang. Nhớ lựa chọn cho các lần sau. [Y/n] ',
   ), true);
   writeGlobalConfig({ readAgentLogs: yes });
-  return yes;
-}
-
-/**
- * Per-repo consent before diff excerpts leave the machine via `claude`. Declined → manual mode.
- * @returns {Promise<boolean>} true = may call claude
- */
-export async function ensureNarratorConsent(repo, config, opts, { ask = askTerminal, interactive = process.stdin.isTTY } = {}) {
-  if (opts.yes) {
-    saveConfig(repo, { ...config, sendDiffToAi: true });
-    return true;
-  }
-  if (typeof config.sendDiffToAi === 'boolean') return config.sendDiffToAi;
-  if (!interactive) {
-    console.log('Chưa được đồng ý gửi diff cho AI ở repo này — dùng chế độ thủ công (thêm --yes để đồng ý).');
-    return false;
-  }
-  const yes = isYes(await ask(
-    'Viết devlog cần gửi trích đoạn diff (đã che secret, bỏ file .env/key) cho `claude` trên máy bạn,\n' +
-    'tức là tới nhà cung cấp AI mà claude đang dùng. Repo công ty/khách hàng thì cân nhắc.\n' +
-    'Đồng ý cho repo này? (không → chế độ thủ công, tự dán vào chat AI) [y/N] ',
-  ), false);
-  saveConfig(repo, { ...config, sendDiffToAi: yes });
   return yes;
 }
 
