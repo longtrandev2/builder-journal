@@ -45,7 +45,8 @@ const PREFIX_CHAPTERS = {
   refactor: 'refactor', perf: 'refactor', style: 'refactor',
   test: 'test', tests: 'test',
   docs: 'docs', doc: 'docs',
-  chore: 'infra', ci: 'infra', build: 'infra', deps: 'infra',
+  // chore is a catch-all ("chore: init README", "chore: hygiene fixes") → no mapping, diff shape decides.
+  ci: 'infra', build: 'infra', deps: 'infra',
 };
 const PREFIX_RE = /^\s*([a-z]+)(\([^)]*\))?!?:\s*\S/i;
 

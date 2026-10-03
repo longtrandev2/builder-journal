@@ -29,7 +29,7 @@ cd ~/duong-dan/toi/repo-cua-ban
 **2. Tạo trang Wrapped**
 
 ```bash
-npx github:longtrandev2/builder-journal wrapped
+npx builder-journal wrapped
 ```
 
 Lần đầu npx tải tool về mất khoảng 20 giây, các lần sau nhanh hơn. Nếu máy có log agent, tool hỏi một câu *có cho đọc log để đếm số không* — gõ Enter là đồng ý, `n` là không.
@@ -41,7 +41,7 @@ Trình duyệt tự mở trang Wrapped. Cuộn xuống để xem từng màn, b�
 **4. Viết devlog (tuỳ chọn)**
 
 ```bash
-npx github:longtrandev2/builder-journal last
+npx builder-journal last
 ```
 
 Trả lời câu *Kỳ này vấp gì nhất?* (Enter để bỏ qua). Lần đầu ở mỗi repo, tool hỏi có cho gửi trích đoạn diff (đã che bí mật) tới `claude` không — gõ `y` để đồng ý (mặc định là không; khi đó tool chuyển sang chế độ dán vào chat AI). Khoảng 20 giây sau có bản nháp bài đăng in ra màn hình và lưu vào file.
@@ -49,7 +49,8 @@ Trả lời câu *Kỳ này vấp gì nhất?* (Enter để bỏ qua). Lần đ�
 **Cài hẳn để gõ ngắn** — sau đó dùng `bj` thay cho cả dòng `npx …`:
 
 ```bash
-npm i -g github:longtrandev2/builder-journal
+npm i -g builder-journal
+bj            # không kèm gì: hiện menu chọn việc
 bj wrapped
 ```
 
@@ -75,9 +76,43 @@ Trang HTML là **một file duy nhất, chạy offline**: gửi file, mở bằn
 | `bj since 3d` / `bj since 2026-07-01` | Devlog cho một khoảng; khoảng dài hơn 14 ngày sẽ kể gộp theo tuần |
 | `bj status` | Đã kể tới đâu, còn bao nhiêu commit chưa kể |
 
-Tuỳ chọn hay dùng: `--repo <đường dẫn>`, `--author "<tên trong git>"` (lặp lại được), `--theme đêm|bình-minh|giấy`, `--unit week|month|quarter`, `--since 90d`, `--no-open`.
+Gõ `bj` không kèm gì trong terminal → hiện **menu đánh số** để chọn việc (kèm dòng lệnh tương ứng để lần sau gõ thẳng). Gõ sai tên lệnh → tool gợi ý lệnh gần đúng.
 
-Riêng `wrapped`: `--all` kèm `--include <đường dẫn>` / `--exclude <tên>` / `--hide-names` (đổi tên repo thành Repo A, B… trên trang và ảnh), `--ai` / `--no-ai` (bật/tắt đọc log agent, nhớ lựa chọn), `-y, --yes` (không hỏi). Riêng `last`/`since`: `-y, --yes` (đồng ý gửi diff cho claude ở repo này), `--narrator manual`, `--narrative <file>`.
+### Tất cả lệnh và cờ
+
+**`bj wrapped`** — trang Wrapped
+| Cờ | Ý nghĩa |
+|---|---|
+| `--repo <đường dẫn>` | repo cần wrap (mặc định: thư mục hiện tại) |
+| `--author <tên\|email>` | tác giả tính là "bạn" (lặp lại được; mặc định lấy từ `.journal/config.json`) |
+| `--since <Nd\|YYYY-MM-DD>` | chỉ lấy từ mốc này (vd `90d`, `2026-03-01`) |
+| `--theme <đêm\|bình-minh\|giấy>` | giao diện (gõ có dấu hay không dấu đều được) |
+| `--unit <week\|month\|quarter>` | đơn vị cột "số commit theo kỳ" |
+| `--all` | Wrapped của bạn: mọi repo tìm thấy trong log agent |
+| `--include <đường dẫn,…>` | thêm repo vào `--all` (lặp lại hoặc phân cách dấu phẩy) |
+| `--exclude <tên,…>` | bỏ repo khỏi `--all` |
+| `--hide-names` | đổi tên repo thành Repo A, B… trên trang, card, ảnh |
+| `--week` | card 1 màn cho 7 ngày gần nhất |
+| `--hardest "<câu>"` | dòng "vấp thật" trên card tuần |
+| `--ai` / `--no-ai` | bật / tắt đọc log agent (nhớ lựa chọn) |
+| `-y, --yes` | không hỏi: đồng ý đọc log nếu chưa từng chọn, giữ mọi repo |
+| `--no-open` | không tự mở trình duyệt |
+
+**`bj last`** — devlog phần chưa kể · **`bj since <Nd|YYYY-MM-DD>`** — devlog cho một khoảng (kể lại, không đẩy sổ cái)
+| Cờ | Ý nghĩa |
+|---|---|
+| `--repo <đường dẫn>` | repo cần kể |
+| `--author <tên\|email>` | tác giả tính là "bạn" (lặp lại được) |
+| `--hardest "<câu>"` | trả lời sẵn câu "vấp gì nhất" (`""` = bỏ qua) |
+| `--narrator <claude\|manual>` | `claude` (mặc định) tự viết; `manual` = xuất file prompt để dán vào chat AI bất kỳ |
+| `--narrative <file>` | dùng bài AI đã viết sẵn (bước 2 của chế độ thủ công) |
+| `--narrator-timeout <ms>` | thời gian chờ claude tối đa (mặc định 180000) |
+| `--extract-only` | chỉ xuất số liệu `.journal/sessions-*.json`, không viết bài |
+| `-y, --yes` | đồng ý gửi diff (đã che bí mật) cho claude ở repo này, không hỏi |
+
+**`bj status`** — đã kể tới đâu: `--repo`, `--author`.
+
+Chung: `-V, --version` (phiên bản), `-h, --help` (trợ giúp; dùng được cho từng lệnh, vd `bj wrapped --help`).
 
 ## Lớp AI (nếu bạn code bằng agent)
 
@@ -100,7 +135,7 @@ Vấp thật: ...
 
 2-3 câu kể đã làm gì, quyết định gì, vì sao.
 
-Thử ngay: npx github:longtrandev2/builder-journal
+Thử ngay: npx builder-journal
 
 (AI hỗ trợ tổng hợp — số liệu đọc trực tiếp từ git)
 ```
@@ -112,7 +147,7 @@ Sổ cái `.journal/journal.jsonl` nhớ đã kể tới commit nào, nên các 
 ## Cách đếm
 
 - **Buổi**: chuỗi commit cách nhau không quá 2 giờ.
-- **Mảng việc** (tính năng, sửa lỗi, dọn code, kiểm thử, tài liệu, hạ tầng): commit có tiền tố [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix(api):`, `refactor!:`, `docs:`, `test:`, `chore:`/`ci:`/`build:`…) được phân loại theo tiền tố; commit không có tiền tố thì theo hình dạng diff (file mới, đổi tên, tỉ lệ thêm/xoá, loại file). Message tự do như "update" không dùng để phân loại. Trang ghi rõ bao nhiêu % theo mỗi cách.
+- **Mảng việc** (tính năng, sửa lỗi, dọn code, kiểm thử, tài liệu, hạ tầng): commit có tiền tố [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix(api):`, `refactor!:`, `docs:`, `test:`, `ci:`/`build:`…) được phân loại theo tiền tố (`chore:` là việc vặt chung chung nên để diff quyết định); commit không có tiền tố thì theo hình dạng diff (file mới, đổi tên, tỉ lệ thêm/xoá, loại file). Message tự do như "update" không dùng để phân loại. Trang ghi rõ bao nhiêu % theo mỗi cách.
 - **Dòng code đã ship**: dòng thêm vào file mã nguồn (tính cả code agent viết); bỏ qua tài liệu, cấu hình, lockfile, thư mục build và bộ kit agent (`.claude/`, `.opencode/`…).
 - **Giờ làm thật** (khi có log agent): tổng thời gian giữa các hoạt động cách nhau không quá 30 phút.
 
@@ -128,7 +163,7 @@ Sổ cái `.journal/journal.jsonl` nhớ đã kể tới commit nào, nên các 
 | `Không tìm thấy lệnh claude` / `claude trả lời quá lâu` | Tool tự chuyển sang chế độ thủ công: mở file `.journal/narrator-prompt-*.md`, copy phần dưới đường kẻ, dán vào chat AI bất kỳ, lưu câu trả lời vào `.journal/narrative.md`, rồi chạy lệnh in ra trên màn hình (có `--narrative`). |
 | `Không tìm thấy commit nào trong 21 ngày` | Repo không có commit gần đây — dùng `since 2026-07-01` (mốc bất kỳ) để kể khoảng cũ, hoặc chỉ chạy `wrapped`. |
 | `--all` không có repo nào | Chế độ này tìm repo qua log agent. Thêm repo bằng tay: `--include "D:\repo-a,D:\repo-b"`. |
-| npx chậm hoặc bản cũ | Ghim phiên bản: `npx github:longtrandev2/builder-journal#v0.1.1 wrapped`. |
+| npx chậm hoặc bản cũ | Ghim phiên bản: `npx builder-journal@0.1.3 wrapped`. Không vào được npm: `npx github:longtrandev2/builder-journal wrapped` (bản trên GitHub). |
 
 ## Chạy từ mã nguồn
 

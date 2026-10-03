@@ -2,11 +2,20 @@
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/), version theo [SemVer](https://semver.org/).
 
+## [0.1.3] — 2026-10-03
+
+### Added
+- Gõ `bj` không kèm gì trong terminal → menu đánh số chọn việc (Wrapped repo / của bạn / card tuần / devlog / trạng thái / trợ giúp), in kèm lệnh tương ứng.
+- Phát hành trên npm: `npx builder-journal wrapped` (cài hẳn: `npm i -g builder-journal`, rồi gõ `bj`).
+
+### Docs
+- README: bảng đầy đủ mọi lệnh và cờ (thêm `--hardest`, `--extract-only`, `--narrator-timeout`).
+
 ## [0.1.2] — 2026-10-03
 
 ### Changed
-- Mảng việc: commit có tiền tố Conventional Commits (`feat:`, `fix(api):`, `refactor!:`, `docs:`, `test:`, `chore:`/`ci:`/`build:`…) được phân loại theo tiền tố; chỉ commit không có tiền tố mới dùng hình dạng diff. Trên 628 commit thật: 98% theo tiền tố (trước đây khớp tiền tố chỉ 67%, yếu nhất ở sửa lỗi 46%).
-- Màn "Mảng việc" ghi rõ bao nhiêu % phân loại theo mỗi cách.
+- Mảng việc: commit có tiền tố Conventional Commits (`feat:`, `fix(api):`, `refactor!:`, `docs:`, `test:`, `ci:`/`build:`…) được phân loại theo tiền tố; chỉ commit không có tiền tố mới dùng hình dạng diff. Trên 628 commit thật: 98% theo tiền tố (trước đây khớp tiền tố chỉ 67%, yếu nhất ở sửa lỗi 46%).
+- Màn "Mảng việc" ghi rõ bao nhiêu % phân loại theo mỗi cách. `chore:` không ánh xạ cứng (việc vặt chung chung) — để hình dạng diff quyết định.
 
 ### Docs
 - README: phần Cần có, Chạy lần đầu từng bước (Windows/macOS), File được tạo ở đâu, Gặp lỗi?, Chạy từ mã nguồn.
@@ -36,6 +45,7 @@ Bản đầu tiên, làm trong buổi build thứ Bảy đầu tiên.
 - Che secret trước khi tạo prompt (key, token, chuỗi kết nối, JWT…); bỏ hẳn diff của `.env*`, khóa, chứng chỉ.
 - Trang share không chứa đường dẫn tuyệt đối, email hay chữ nào từ prompt.
 
+[0.1.3]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.3
 [0.1.2]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.2
 [0.1.1]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.1
 [0.1.0]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.0
