@@ -83,9 +83,8 @@ export function wrappedPageClient() {
       },
     },
     direct: {
-      prep: (s) => { A.utils.set($$('.duel rect', s), { scaleY: 0 }); A.utils.set(s.querySelector('.redo'), { opacity: 0, translateX: -12 }); },
-      play: (s) => [...counts(s), ...grow($$('.duel rect', s), 'scaleY', { delay: A.stagger(28, { from: 'center', start: 300 }), duration: 800 }),
-        A.animate(s.querySelector('.redo'), { opacity: [0, 1], translateX: [-12, 0], delay: 900, duration: 700, ease: 'outCubic' })],
+      prep: (s) => { A.utils.set($$('.duel rect', s), { scaleY: 0 }); },
+      play: (s) => [...counts(s), ...grow($$('.duel rect', s), 'scaleY', { delay: A.stagger(28, { from: 'center', start: 300 }), duration: 800 })],
     },
     agent: {
       prep: (s) => A.utils.set($$('.seg,.m-bar i', s), { scaleX: 0 }),

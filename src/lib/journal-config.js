@@ -56,12 +56,6 @@ export function loadConfig(repo) {
   }
 }
 
-/** Persist the repo config (e.g. remembered consent). */
-export function saveConfig(repo, config) {
-  ensureJournal(repo);
-  fs.writeFileSync(journalFile(repo, 'config.json'), JSON.stringify(config, null, 2) + '\n');
-}
-
 /** --author flag(s) override config authors entirely. */
 export function resolveAuthors(config, authorFlag) {
   const flags = [].concat(authorFlag || []).filter(Boolean);

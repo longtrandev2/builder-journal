@@ -130,7 +130,7 @@ test('privacy: aggregate never contains prompt text', () => {
   assert.ok(!/login page|Refactor the header|Build a parser|làm lại/.test(json));
 });
 
-test('repo discovery: git repos only, deduped by toplevel, exclude by name', () => {
+test('repo discovery: git repos only, deduped by toplevel, exclude by name', async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bj-repo-'));
   const keepCeiling = process.env.GIT_CEILING_DIRECTORIES;
   process.env.GIT_CEILING_DIRECTORIES = tmp; // tmp may itself sit inside a git repo (e.g. home dir)
@@ -142,11 +142,11 @@ test('repo discovery: git repos only, deduped by toplevel, exclude by name', () 
     assert.equal(spawnSync('git', ['init', '-q', repo]).status, 0);
     const proj = (p, prompts, activeMinutes) => ({ path: p, name: path.basename(p), prompts, activeMinutes, lastActive: '2026-09-20T00:00:00Z' });
     const activity = { projects: [proj(repo, 2, 10), proj(sub, 3, 5), proj(plain, 9, 99), proj(path.join(tmp, 'gone'), 1, 1)] };
-    const repos = discoverRepos(activity);
+    const repos = await discoverRepos(activity);
     assert.equal(repos.length, 1);
     assert.deepEqual([repos[0].name, repos[0].prompts, repos[0].activeMinutes], ['my-repo', 5, 15]);
-    assert.equal(discoverRepos(activity, { exclude: ['MY-REPO'] }).length, 0);
-    assert.equal(discoverRepos(null).length, 0);
+    assert.equal((await discoverRepos(activity, { exclude: ['MY-REPO'] })).length, 0);
+    assert.equal((await discoverRepos(null)).length, 0);
   } finally {
     if (keepCeiling === undefined) delete process.env.GIT_CEILING_DIRECTORIES;
     else process.env.GIT_CEILING_DIRECTORIES = keepCeiling;

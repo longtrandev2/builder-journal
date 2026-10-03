@@ -43,7 +43,7 @@ test('AI + leverage screens render when data.ai is present', () => {
   assertSelfContained(html);
   assertCopyRules(html);
   for (const id of AI_SCREENS) assert.ok(html.includes(id), `${id} present`);
-  assert.ok(html.includes('làm lại 98 lần'));
+  assert.ok(!html.includes('làm lại'), 'the keyword-based redo line is gone');
   assert.ok(html.includes('11,2 triệu'));
   assert.ok(html.includes('07/09 đến 03/10/2026'), 'AI log range noted');
 });

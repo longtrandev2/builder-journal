@@ -17,15 +17,12 @@ test('every menu item maps to real CLI args', () => {
   assert.deepEqual(argsForChoice('1'), ['wrapped']);
   assert.deepEqual(argsForChoice(' 2 '), ['wrapped', '--all']);
   assert.deepEqual(argsForChoice('3'), ['wrapped', '--week']);
-  assert.deepEqual(argsForChoice('4'), ['last']);
-  assert.deepEqual(argsForChoice('5', '3d'), ['since', '3d']);
-  assert.deepEqual(argsForChoice('6'), ['status']);
+  assert.deepEqual(argsForChoice('4'), ['update']);
   assert.deepEqual(argsForChoice(String(MENU_ITEMS.length)), ['--help']);
 });
 
 test('exit, junk and missing follow-up answers return null', () => {
   for (const a of ['0', '', 'x', '99', '-1', '1.5']) assert.equal(argsForChoice(a), null, a);
-  assert.equal(argsForChoice('5', '  '), null, 'since without a date');
 });
 
 test('menu text lists every item with a number and an exit option', () => {
@@ -34,11 +31,7 @@ test('menu text lists every item with a number and an exit option', () => {
   assert.ok(text.includes('0. Thoát'));
 });
 
-test('runMenu asks the follow-up only when needed', async () => {
-  const answers = ['5', '14d'];
-  const asked = [];
-  const args = await quiet(() => runMenu(async (q) => { asked.push(q); return answers.shift(); }));
-  assert.deepEqual(args, ['since', '14d']);
-  assert.equal(asked.length, 2);
+test('runMenu returns args for a choice and null for exit', async () => {
+  assert.deepEqual(await quiet(() => runMenu(async () => '2')), ['wrapped', '--all']);
   assert.equal(await quiet(() => runMenu(async () => '0')), null);
 });

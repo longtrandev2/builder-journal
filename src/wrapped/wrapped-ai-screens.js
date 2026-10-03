@@ -33,9 +33,6 @@ export function screenDirect(d) {
     : pPeak === cPeak
       ? `Ra lệnh và ship cùng một khung giờ: <b>${pPeak}h</b>.`
       : `Ra lệnh nhiều nhất lúc <b>${pPeak}h</b>, ship nhiều nhất lúc <b>${cPeak}h</b>.`;
-  const redo = ai.corrections
-    ? `Bạn đã bảo agent <b>làm lại ${fmtNum(ai.corrections)} lần</b>. Cứ khoảng ${fmtNum(Math.max(1, Math.round(ai.prompts / ai.corrections)))} lệnh lại có một lần nói lại, agent nào cũng cần được nhắc.`
-    : 'Chưa lần nào phải bảo agent làm lại. Hiếm lắm đấy.';
   const busy = ai.busiestDay
     ? stat(fmtDate(ai.busiestDay.date, false), `ngày cày nhất, ${fmtDuration(Math.round(ai.busiestDay.minutes))}`) : '';
   return {
@@ -44,7 +41,7 @@ export function screenDirect(d) {
 <div class="hero-main">${count(ai.prompts, 'mega num')}<p class="hero-label">lệnh đã gõ cho agent</p></div>
 <div class="stats">${stat(fmtHours(ai.activeMinutes), 'làm việc thật')}${stat(ai.agentSessions, 'phiên agent')}${busy}</div>
 </div>
-<p class="redo">${icon('rotate-ccw')}<span>${redo}</span></p></div>
+</div>
 <div><figure class="duel-box">${hourDuelSvg(ai.promptHours, commitHours)}
 <figcaption class="legend"><span class="key up">lệnh cho agent</span>${hasCommits ? '<span class="key down">commit</span>' : ''}</figcaption></figure>
 <p class="lead">${contrast}</p></div></div>

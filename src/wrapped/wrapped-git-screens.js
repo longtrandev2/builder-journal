@@ -43,7 +43,7 @@ export function screenHero(d) {
 <div class="hero-main">${count(h.codeLines, 'mega num')}<p class="hero-label">dòng code đã ship</p><p class="hero-note">tính cả code agent viết, chỉ file mã nguồn</p></div>
 <div class="stats">${stat(h.sessions, 'buổi code')}${stat(h.commits, 'commit')}${stat(h.chapters, 'mảng việc')}</div>
 </div>
-<p class="note">Một buổi là chuỗi commit cách nhau không quá 2 giờ. Dòng code bỏ qua tài liệu, cấu hình, lockfile và bộ kit agent.</p>`,
+<p class="note">${h.merges ? `Số commit tính cả ${fmtNum(h.merges)} merge commit. ` : ''}Một buổi là chuỗi commit cách nhau không quá 2 giờ. Dòng code bỏ qua tài liệu, cấu hình, lockfile và bộ kit agent.</p>`,
   };
 }
 

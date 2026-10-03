@@ -1,6 +1,5 @@
 // `builder-journal wrapped`: repo (default) or person (--all) scope → aggregate → self-contained
 // HTML (+ card SVG) → open browser. `--week` renders the one-screen weekly mini card instead.
-// Does NOT write the ledger: wrapping is looking back, not "telling" — `last` keeps working after it.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,12 +7,12 @@ import { spawn } from 'node:child_process';
 import { resolveRepo, hasCommits, UserFacingError } from '../lib/run-git.js';
 import { loadConfig, resolveAuthors, normalizeTheme, UNITS } from '../lib/journal-config.js';
 import { dateStamp, journalFile, displayPath } from '../lib/journal-paths.js';
-import { buildPeriod, parseSince } from '../extractor/extract-sessions.js';
+import { buildPeriodAsync, parseSince } from '../extractor/extract-sessions.js';
 import { aggregateWrapped } from './wrapped-aggregator.js';
 import { renderWrappedHtml } from './wrapped-html-template.js';
 import { renderWeeklyCardHtml } from './weekly-card-html-template.js';
 import { renderCardSvg } from './card-svg-template.js';
-import { buildLeverage, safeActivity, buildPersonPeriod, personAuthors, shareSafe, commitHoursInRange, hideRepoNames } from './wrapped-scope-builder.js';
+import { buildLeverage, safeActivity, safeEvents, buildPersonPeriod, personAuthors, shareSafe, commitHoursInRange, hideRepoNames } from './wrapped-scope-builder.js';
 import { ensureAiLogConsent, confirmRepos, aliasNames } from '../lib/user-consent.js';
 import { fmtNum, fmtRange } from '../lib/vn-format.js';
 import { CHAPTER_LABELS } from '../extractor/chapter-classifier.js';
@@ -40,11 +39,13 @@ async function buildScope(opts, from) {
   if (opts.all) {
     const authors = personAuthors(opts.author);
     const exclude = [].concat(opts.exclude || []).flatMap((x) => String(x).split(',')).map((x) => x.trim()).filter(Boolean);
-    const activityAll = safeActivity({}, aiAllowed);
+    // Agent logs are read ONCE: the same events serve repo discovery and the AI screens.
+    const events = safeEvents(aiAllowed);
+    const activityAll = events ? safeActivity({ events }, true) : null;
     const include = [].concat(opts.include || []).flatMap((x) => String(x).split(',')).map((x) => x.trim()).filter(Boolean);
     const confirm = (list) => confirmRepos(list, opts);
     const { period, repos } = await buildPersonPeriod({ authors, from, exclude, include, activityAll, confirm });
-    const ai = safeActivity({ since: from, projects: repos.map((r) => r.path) }, aiAllowed);
+    const ai = events ? safeActivity({ since: from, projects: repos.map((r) => r.path), events }, true) : null;
     const outDir = path.join(os.homedir(), '.builder-journal');
     fs.mkdirSync(outDir, { recursive: true });
     // Never put an email on a share page: first identity that is not an email, else the OS user.
@@ -56,12 +57,14 @@ async function buildScope(opts, from) {
   const { config, created } = loadConfig(repo);
   if (created) console.log(`Lần đầu chạy — đã tạo ${displayPath(journalFile(repo, 'config.json'))} (sửa displayName/authors/theme ở đây).`);
   const authors = resolveAuthors(config, opts.author);
-  const period = buildPeriod(repo, { authors, from, withPatch: false });
+  // Start git first; the agent logs are read while git works.
+  const periodPromise = buildPeriodAsync(repo, { authors, from });
+  const ai = safeActivity({ since: from, projects: [repo] }, aiAllowed);
+  const period = await periodPromise;
   if (!period.commits.length) {
     throw new UserFacingError(`Không thấy commit nào của ${authors.join(' / ')} — thử --author "<tên trong git log>".`);
   }
   if (period.capped) console.log('Repo lớn: chỉ lấy 5000 commit gần nhất trong khoảng.');
-  const ai = safeActivity({ since: from, projects: [repo] }, aiAllowed);
   return { period, ai, repos: null, name: path.basename(repo), displayName: config.displayName, outDir: path.join(repo, '.journal'), config, scope: 'repo' };
 }
 
@@ -75,7 +78,7 @@ function writeWeekly(s, theme, opts) {
     commits: period.stats.commits,
     codeLines: period.stats.codeLines,
     chapters: Object.entries(period.stats.chapters) // already sorted by count desc
-      .map(([id, count]) => ({ id, label: CHAPTER_LABELS[id] || id, count, percent: Math.round((count / period.stats.commits) * 100) })),
+      .map(([id, count]) => ({ id, label: CHAPTER_LABELS[id] || id, count, percent: Math.round((count / Math.max(1, period.stats.commits - (period.stats.merges || 0))) * 100) })),
     ai: opts.hideNames && ai ? { ...shareSafe(ai, null).ai, projects: [] } : shareSafe(ai, null).ai,
     hardest: opts.hardest || '',
   };

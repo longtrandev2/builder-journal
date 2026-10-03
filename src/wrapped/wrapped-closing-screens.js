@@ -1,6 +1,6 @@
 // Person-scope repos screen + the closing screen (typed highlight, copy command, privacy note).
 import { escapeHtml as e, fmtNum, fmtDate } from '../lib/vn-format.js';
-import { NPX_COMMAND, PRODUCT_NAME } from '../lib/product-info.js';
+import { INSTALL_COMMAND, RUN_COMMAND, PRODUCT_NAME } from '../lib/product-info.js';
 import { icon } from '../vendor/lucide-icons.js';
 
 const TOP_REPOS = 6;
@@ -35,7 +35,8 @@ export function screenClose(d, highlight) {
   return {
     id: 'khep-lai', kicker: 'Khép lại', icon: 'check', moment: 'type',
     body: `<p class="quote" data-type>${e(highlight)}</p>
-<div class="cmd"><code id="cmd">${e(NPX_COMMAND)} wrapped</code><button type="button" class="btn no-export" id="copy">${icon('copy', { size: 18 })}<span>Chép lệnh</span></button></div>
+<div class="cmd"><code id="cmd" style="white-space:pre">${e(INSTALL_COMMAND)}
+${e(RUN_COMMAND)}</code><button type="button" class="btn no-export" id="copy">${icon('copy', { size: 18 })}<span>Chép lệnh</span></button></div>
 <p class="note">Chạy lệnh trong thư mục repo của bạn để có trang như thế này. ${privacy}</p>
 <p class="made">Làm bằng ${e(PRODUCT_NAME)}</p>`,
   };

@@ -79,10 +79,18 @@ export function classifyCommit(commit) {
   return classifyWithSource(commit).chapter;
 }
 
-/** Mutates commits with .chapter + .chapterSource; returns { chapterName: count } ordered by count desc. */
+/**
+ * Mutates commits with .chapter + .chapterSource; returns { chapterName: count } ordered by count desc.
+ * Merge commits get chapter null: they have no diff of their own and would skew the split.
+ */
 export function classifyAll(commits) {
   const counts = {};
   for (const c of commits) {
+    if (c.isMerge) {
+      c.chapter = null;
+      c.chapterSource = null;
+      continue;
+    }
     const { chapter, source } = classifyWithSource(c);
     c.chapter = chapter;
     c.chapterSource = source;
