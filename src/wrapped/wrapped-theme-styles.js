@@ -87,8 +87,8 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-off
 @media print{.screen{min-height:auto;break-after:page}.themes,.no-export{display:none}}`;
 }
 
-/** Theme switcher: 44px targets, swatch shows each theme's paper + accent. */
-export function themeSwitcherHtml(active) {
+/** Theme switcher: 44px targets, swatch shows each theme's paper + accent. extraHtml = optional controls appended to the dock (companion picker). */
+export function themeSwitcherHtml(active, extraHtml = '') {
   return `<nav class="themes no-export" aria-label="Đổi giao diện">${Object.entries(PALETTES).map(([id, p]) =>
-    `<button type="button" data-set="${id}" aria-label="Giao diện ${p.label}" title="${p.label}" aria-pressed="${id === active}"><span class="sw" style="background:${p.bg};--sw-accent:${p.accent2}"></span></button>`).join('')}</nav>`;
+    `<button type="button" data-set="${id}" aria-label="Giao diện ${p.label}" title="${p.label}" aria-pressed="${id === active}"><span class="sw" style="background:${p.bg};--sw-accent:${p.accent2}"></span></button>`).join('')}${extraHtml}</nav>`;
 }

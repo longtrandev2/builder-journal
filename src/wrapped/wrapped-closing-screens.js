@@ -1,7 +1,12 @@
-// Person-scope repos screen + the closing screen (typed highlight, copy command, privacy note).
+// Person-scope repos screen + the closing screen (typed highlight, copy command, privacy note,
+// and the companion's "Lời nhắn" speech bubble built from the user's own numbers).
 import { escapeHtml as e, fmtNum, fmtDate } from '../lib/vn-format.js';
 import { INSTALL_COMMAND, RUN_COMMAND, PRODUCT_NAME } from '../lib/product-info.js';
 import { icon } from '../vendor/lucide-icons.js';
+import { pickNotes, notesStatsFrom, poseForLead, isoWeek } from './closing-notes.js';
+import { ATTRIBUTION } from './companion-markup.js';
+import { autoCompanion } from './companion-assignment.js';
+import { createSpriteKit } from './companion-sprites.js';
 
 const TOP_REPOS = 6;
 
@@ -28,7 +33,19 @@ export function screenRepos(d) {
   };
 }
 
-export function screenClose(d, highlight) {
+/**
+ * Speech bubble: 2-3 data-driven notes + a sign-off. The text is complete in the markup (no JS / export safe);
+ * the client script hides and types it. Every value is escaped: notes carry numbers and dates.
+ */
+export function notesBubble(d, now = new Date()) {
+  const { lines, lead, signoff } = pickNotes(notesStatsFrom(d), `${d.repoName}|${isoWeek(now)}`);
+  const all = [...lines.map((l) => l.text), signoff];
+  const name = createSpriteKit().CHARS[autoCompanion(d.ai)].name;
+  const rows = all.map((text, i) => `<p class="say-line${i === all.length - 1 ? ' sign' : ''}"><span class="on">${e(text)}</span><span class="off"></span></p>`).join('');
+  return { lead, html: `<div class="say" data-lead-pose="${poseForLead(lead)}" data-notes="${e(lines.map((l) => l.id).join(' '))}"><h3>Lời nhắn từ ${e(name)}</h3><div aria-hidden="true">${rows}</div><p class="sr">${e(all.join(' '))}</p></div>` };
+}
+
+export function screenClose(d, highlight, now = new Date()) {
   const privacy = d.ai
     ? 'Số liệu đọc từ git và log agent trên máy bạn. Trang chỉ chứa con số tổng, không có nội dung lệnh nào, không gửi đi đâu.'
     : 'Số liệu đọc trực tiếp từ git trên máy bạn, không gửi đi đâu.';
@@ -38,6 +55,8 @@ export function screenClose(d, highlight) {
 <div class="cmd"><code id="cmd" style="white-space:pre">${e(INSTALL_COMMAND)}
 ${e(RUN_COMMAND)}</code><button type="button" class="btn no-export" id="copy">${icon('copy', { size: 18 })}<span>Chép lệnh</span></button></div>
 <p class="note">Chạy lệnh trong thư mục repo của bạn để có trang như thế này. ${privacy}</p>
-<p class="made">Làm bằng ${e(PRODUCT_NAME)}</p>`,
+<p class="note attribution">${e(ATTRIBUTION)}</p>
+<p class="made">Làm bằng ${e(PRODUCT_NAME)}</p>
+${notesBubble(d, now).html}`,
   };
 }

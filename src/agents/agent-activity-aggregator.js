@@ -5,6 +5,9 @@ export const IDLE_GAP_MINUTES = 30; // gap between two events in a session above
 
 const EDIT_TOOLS = new Set(['Edit', 'MultiEdit', 'Write', 'NotebookEdit', 'apply_patch']);
 const COMMAND_TOOLS = new Set(['Bash', 'PowerShell', 'shell', 'exec_command', 'local_shell', 'local_shell_call']);
+// Sub-agent delegations (Claude Code 'Task', newer builds 'Agent'): counted separately in actions.delegations,
+// still 'other' for the edits/commands/reads split.
+const DELEGATION_TOOLS = new Set(['Agent', 'Task']);
 const READ_TOOLS = new Set(['Read', 'Grep', 'Glob', 'LS', 'WebFetch', 'WebSearch']);
 
 /** Normalize a path for comparison: forward slashes, no trailing slash, lowercase on Windows. */
@@ -85,7 +88,9 @@ export function aggregateAgentActivity(events, { projects } = {}) {
   if (!kept.some((e) => e.kind === 'prompt')) return null;
 
   const promptHours = new Array(24).fill(0);
-  const actions = { edits: 0, commands: 0, reads: 0, other: 0, total: 0 };
+  const actions = { edits: 0, commands: 0, reads: 0, other: 0, delegations: 0, total: 0 };
+  const promptsBySource = {};
+  const promptDays = new Set(); // local dates with at least one prompt
   const modelCounts = new Map();
   const tokens = { input: 0, output: 0 };
   const projectStats = new Map(); // normalized path -> { path, prompts, lastActive }
@@ -101,10 +106,13 @@ export function aggregateAgentActivity(events, { projects } = {}) {
     to = Math.max(to, e.t);
     if (e.kind === 'prompt') {
       prompts++;
+      promptsBySource[e.source] = (promptsBySource[e.source] || 0) + 1;
+      promptDays.add(localDate(new Date(e.t)));
       if (e.correction) corrections++;
       promptHours[new Date(e.t).getHours()]++;
     } else if (e.kind === 'tool') {
       actions[classifyTool(e.tool)]++;
+      if (DELEGATION_TOOLS.has(e.tool)) actions.delegations++;
       actions.total++;
     } else if (e.kind === 'assistant') {
       tokens.input += e.inTokens || 0;
@@ -136,6 +144,9 @@ export function aggregateAgentActivity(events, { projects } = {}) {
     sources: [...sources],
     range: { from: new Date(from).toISOString(), to: new Date(to).toISOString() },
     prompts,
+    promptsBySource, // counts only: decides which companion character greets the user
+    promptDays: promptDays.size,
+    activeDays: activity.perDay.size, // local days with measured agent time
     corrections,
     activeMinutes: Math.round(activity.total),
     agentSessions: activity.sessions,
