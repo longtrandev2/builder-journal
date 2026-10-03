@@ -9,11 +9,14 @@ export class UserFacingError extends Error {
   }
 }
 
-/** Run `git -C <repo> ...args` and return stdout. Throws on non-zero exit. */
-export function runGit(repo, args) {
-  const result = spawnSync('git', ['-C', repo, ...args], {
+/**
+ * Run `git -C <repo> ...args` and return stdout. Throws on non-zero exit (or ENOBUFS past maxBuffer).
+ * core.quotepath=off: paths with Vietnamese/CJK characters come out as real UTF-8, not "\303\240" escapes.
+ */
+export function runGit(repo, args, { maxBuffer = 512 * 1024 * 1024 } = {}) {
+  const result = spawnSync('git', ['-C', repo, '-c', 'core.quotepath=off', ...args], {
     encoding: 'utf8',
-    maxBuffer: 512 * 1024 * 1024,
+    maxBuffer,
     windowsHide: true,
   });
   if (result.error) {

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import { readCommits, isNoiseFile } from './git-reader.js';
 import { groupSessions } from './session-grouper.js';
-import { classifyAll, fileKind } from './chapter-classifier.js';
+import { classifyAll } from './chapter-classifier.js';
 import { UserFacingError } from '../lib/run-git.js';
 import { dateStamp, ensureJournal, journalFile } from '../lib/journal-paths.js';
 
@@ -19,7 +19,10 @@ export function parseSince(value, now = new Date()) {
   const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (ymd) {
     const d = new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]));
-    if (!Number.isNaN(d.getTime()) && d < now) return d;
+    if (!Number.isNaN(d.getTime())) {
+      if (d >= now) throw new UserFacingError(`Mốc "${s}" ở tương lai — chọn ngày đã qua, ví dụ 7d hoặc 2026-07-01.`);
+      return d;
+    }
   }
   throw new UserFacingError(`Không hiểu mốc thời gian "${s}" — dùng dạng 3d (3 ngày) hoặc 2026-07-01.`);
 }
@@ -28,11 +31,20 @@ export function daysBetween(from, to = new Date()) {
   return (to.getTime() - from.getTime()) / DAY;
 }
 
-/** Inserted lines in real source files only (no docs/config/tests/lockfiles/agent kits). */
+// Extensions that count as "lines of code written". Whitelist (not "everything but docs"): svg/json/csv/lock/
+// generated blobs must never inflate the number.
+const CODE_EXTENSIONS = new Set(
+  'js jsx ts tsx mjs cjs vue svelte py rb go rs java kt kts swift c cc cpp h hpp cs php dart scala lua sql sh ps1 css scss sass less html astro ex exs erl clj elm hs ml r jl m'.split(' '),
+);
+
+export function isCodeFile(filePath) {
+  const dot = filePath.lastIndexOf('.');
+  return dot > 0 && CODE_EXTENSIONS.has(filePath.slice(dot + 1).toLowerCase()) && !isNoiseFile(filePath);
+}
+
+/** Inserted lines in whitelisted source-code files (lockfiles/build output/agent kits excluded as noise). */
 export function codeInsertions(commit) {
-  return (commit.numstat || [])
-    .filter((f) => !isNoiseFile(f.path) && fileKind(f.path) === 'src')
-    .reduce((s, f) => s + f.ins, 0);
+  return (commit.numstat || []).filter((f) => isCodeFile(f.path)).reduce((s, f) => s + f.ins, 0);
 }
 
 /** Aggregate numbers shared by devlog, ledger and status — all deterministic. */

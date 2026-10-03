@@ -36,10 +36,10 @@ export function buildBackfill(repo, { from, authors, revRange }) {
 }
 
 /** Ledger lines for every non-empty week (seeded:true); the last one points at the HEAD read. */
-export function seededEntries(backfill, outputFile, headHash) {
+export function seededEntries(backfill, outputFile, headHash, authors = []) {
   const last = backfill.chunks.length - 1;
   return backfill.chunks.map((chunk, i) =>
-    ledgerEntry({ from: chunk.from, to: chunk.to, commits: chunk.commits, stats: chunk.stats, outputFile, seeded: true, tipHash: i === last ? headHash : undefined }),
+    ledgerEntry({ from: chunk.from, to: chunk.to, commits: chunk.commits, stats: chunk.stats, outputFile, seeded: true, tipHash: i === last ? headHash : undefined, authors }),
   );
 }
 
