@@ -3,13 +3,21 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { StringDecoder } from 'node:string_decoder';
 
 // Vietnamese + English "the agent got it wrong / try again" markers. Crude on purpose.
 const CORRECTION_RE = /sai rồi|không phải|chưa đúng|làm lại|vẫn lỗi|vẫn bị|lỗi rồi|không chạy|wrong|still (broken|failing|not)|try again|doesn't work/i;
 
+const CORRECTION_MAX_CHARS = 600; // long prompts are specs / pasted logs, not "you got it wrong"
+const CORRECTION_SCAN_CHARS = 200; // a real correction says so up front
+
 export function isCorrectionPrompt(text) {
-  return CORRECTION_RE.test(text);
+  const s = String(text);
+  return s.length <= CORRECTION_MAX_CHARS && CORRECTION_RE.test(s.slice(0, CORRECTION_SCAN_CHARS));
 }
+
+// Auto-generated "user" lines after /compact or context overflow — not typed by the human.
+const CONTINUATION_RE = /^this session is being continued from a previous conversation/i;
 
 /** Normalize `since` (Date | ISO string | ms) to epoch ms, or 0 when absent/invalid. */
 export function sinceMs(since) {
@@ -35,15 +43,39 @@ export function listJsonlFiles(dir, accept = () => true) {
   return out;
 }
 
-/** Parse a JSONL file line by line; bad lines and unreadable files are skipped silently. */
-export function* parseJsonlLines(file) {
-  let text;
+const CHUNK_BYTES = 1024 * 1024;
+
+/** Yield the lines of a file reading 1 MB at a time (sync, constant memory — session logs reach 100s of MB). */
+function* readLines(file) {
+  let fd;
   try {
-    text = fs.readFileSync(file, 'utf8');
+    fd = fs.openSync(file, 'r');
   } catch {
     return;
   }
-  for (const line of text.split('\n')) {
+  const decoder = new StringDecoder('utf8'); // keeps multi-byte chars intact across chunk edges
+  const buf = Buffer.allocUnsafe(CHUNK_BYTES);
+  let rest = '';
+  try {
+    for (;;) {
+      const n = fs.readSync(fd, buf, 0, CHUNK_BYTES, null);
+      if (n === 0) break;
+      const parts = (rest + decoder.write(buf.subarray(0, n))).split('\n');
+      rest = parts.pop();
+      yield* parts;
+    }
+    rest += decoder.end();
+    if (rest) yield rest;
+  } catch {
+    /* unreadable mid-way: keep what we already yielded */
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+/** Parse a JSONL file line by line; bad lines and unreadable files are skipped silently. */
+export function* parseJsonlLines(file) {
+  for (const line of readLines(file)) {
     if (!line || line.charCodeAt(0) !== 123) continue; // cheap "starts with {" check
     try {
       const obj = JSON.parse(line);
@@ -74,7 +106,7 @@ function classifyPrompt(content) {
   }
   if (text === null) return null;
   const trimmed = text.trimStart();
-  if (!trimmed || trimmed.startsWith('<') || trimmed.startsWith('[Request interrupted')) return null;
+  if (!trimmed || trimmed.startsWith('<') || trimmed.startsWith('[Request interrupted') || CONTINUATION_RE.test(trimmed)) return null;
   return { chars: text.length, correction: isCorrectionPrompt(text) };
 }
 
@@ -92,7 +124,7 @@ function readFileEvents(file, cutoff) {
     if (!ts || (cutoff && Date.parse(ts) < cutoff)) continue;
     const base = { source: 'claude-code', ts, project: typeof line.cwd === 'string' ? line.cwd : null, sessionId: line.sessionId || path.basename(file, '.jsonl') };
     const msg = line.message;
-    if (line.type === 'user' && !line.isMeta && !isSubagent && !line.isSidechain && msg) {
+    if (line.type === 'user' && !line.isMeta && !line.isCompactSummary && !line.isVisibleInTranscriptOnly && !isSubagent && !line.isSidechain && msg) {
       const p = classifyPrompt(msg.content);
       if (p) events.push({ ...base, kind: 'prompt', promptChars: p.chars, correction: p.correction });
     } else if (line.type === 'assistant' && msg) {

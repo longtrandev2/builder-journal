@@ -30,28 +30,40 @@ export function classifyTool(name) {
   return 'other';
 }
 
-/** Per-session active minutes: sum of consecutive-event gaps <= 30 min, credited to the later event's project/day. */
+/**
+ * Active minutes: every gap <= 30 min between consecutive events of one session is an "active interval".
+ * Intervals from parallel sessions are merged (sweep by start, count only time not yet covered) so two
+ * agents running side by side never double-count the wall clock. Credit goes to the later event's project/day.
+ */
 function measureActivity(events) {
   const bySession = new Map();
   for (const e of events) {
     if (!bySession.has(e.sessionId)) bySession.set(e.sessionId, []);
     bySession.get(e.sessionId).push(e);
   }
-  const perProject = new Map(); // normalized project -> minutes
-  const perDay = new Map(); // local YYYY-MM-DD -> minutes
-  let total = 0;
+  const intervals = [];
   for (const list of bySession.values()) {
     list.sort((a, b) => a.t - b.t);
     for (let i = 1; i < list.length; i++) {
-      const gap = (list[i].t - list[i - 1].t) / 60000;
-      if (gap > IDLE_GAP_MINUTES) continue;
-      total += gap;
-      const day = localDate(new Date(list[i].t));
-      perDay.set(day, (perDay.get(day) || 0) + gap);
-      if (list[i].project) {
-        const k = normalizePath(list[i].project);
-        perProject.set(k, (perProject.get(k) || 0) + gap);
-      }
+      if ((list[i].t - list[i - 1].t) / 60000 > IDLE_GAP_MINUTES) continue;
+      intervals.push({ start: list[i - 1].t, end: list[i].t, project: list[i].project });
+    }
+  }
+  intervals.sort((a, b) => a.start - b.start || a.end - b.end);
+  const perProject = new Map(); // normalized project -> minutes
+  const perDay = new Map(); // local YYYY-MM-DD -> minutes
+  let total = 0;
+  let covered = -Infinity;
+  for (const iv of intervals) {
+    const minutes = (iv.end - Math.max(iv.start, covered)) / 60000;
+    covered = Math.max(covered, iv.end);
+    if (minutes <= 0) continue;
+    total += minutes;
+    const day = localDate(new Date(iv.end));
+    perDay.set(day, (perDay.get(day) || 0) + minutes);
+    if (iv.project) {
+      const k = normalizePath(iv.project);
+      perProject.set(k, (perProject.get(k) || 0) + minutes);
     }
   }
   return { total, perProject, perDay, sessions: bySession.size };

@@ -22,7 +22,7 @@ export function readLedger(repo) {
       bad++;
     }
   }
-  if (bad) console.warn(`⚠ Bỏ qua ${bad} dòng hỏng trong .journal/${LEDGER}.`);
+  if (bad) console.warn(`Lưu ý: bỏ qua ${bad} dòng hỏng trong .journal/${LEDGER}.`);
   return entries;
 }
 
@@ -55,8 +55,15 @@ export function tipCommit(commits) {
   return commits.reduce((a, b) => (b.order < a.order ? b : a));
 }
 
+/** Same people? Order-insensitive, case-insensitive. Entries from before `authors` existed never warn. */
+export function sameAuthors(a, b) {
+  if (!Array.isArray(a)) return true;
+  const norm = (list) => [...new Set(list.map((x) => String(x).trim().toLowerCase()))].sort().join('|');
+  return norm(a) === norm(b);
+}
+
 /** Build one ledger line. tipHash = the HEAD the run read up to (exact boundary, no gaps/overlap). */
-export function ledgerEntry({ from, to, commits, stats, outputFile, seeded = false, tipHash }) {
+export function ledgerEntry({ from, to, commits, stats, outputFile, seeded = false, tipHash, authors = [] }) {
   return {
     date: new Date().toISOString(),
     range_from: from,
@@ -65,5 +72,6 @@ export function ledgerEntry({ from, to, commits, stats, outputFile, seeded = fal
     stats: { sessions: stats.sessions, commits: stats.commits, chapters: stats.chapters },
     output_file: outputFile,
     seeded,
+    authors: [...authors],
   };
 }

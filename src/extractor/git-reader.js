@@ -1,5 +1,6 @@
 // Reads author-filtered, non-merge commits with per-file numstat (+ optional patch excerpts).
-import { runGit } from '../lib/run-git.js';
+import { runGit, UserFacingError } from '../lib/run-git.js';
+import { stripSensitiveDiff } from '../narrator/secret-redactor.js';
 
 const REC = '\x1e';
 const FIELD = '\x1f';
@@ -14,9 +15,15 @@ export function isNoiseFile(filePath) {
   return NOISE_RE.test(filePath);
 }
 
-/** git --author uses POSIX basic regex — escape the specials so names/emails match literally. */
+/**
+ * git --author matches a regex against "Name <email>". Escape the specials (POSIX basic regex) and ANCHOR:
+ * emails as `<email>` (an@x.com must not match tuan@x.com), names as `^Name <` (Ln must not match Alan).
+ */
 export function authorArgs(authors = []) {
-  return authors.filter(Boolean).map((a) => `--author=${String(a).replace(/[.*^$\\[\]]/g, '\\$&')}`);
+  return authors.filter(Boolean).map((a) => {
+    const esc = String(a).trim().replace(/[.*^$\\[\]]/g, '\\$&');
+    return `--author=${String(a).includes('@') ? `<${esc}>` : `^${esc} <`}`;
+  });
 }
 
 /** "src/{a => b}.js" or "a => b" → new path. */
@@ -91,15 +98,37 @@ export function readCommits(repo, options = {}) {
   return { commits, capped: commits.length >= MAX_COMMITS };
 }
 
-/** Attach the first PATCH_LINES lines of each commit's diff (devlog narrator input only). */
+// Diffs are only worth reading for the newest commits; the narrator budget is ~30 KB anyway.
+const PATCH_COMMITS = 100;
+const PATCH_MAX_BUFFER = 64 * 1024 * 1024;
+// Pathspec excludes keep lockfiles / builds / agent kits out of `git log -p` (cheaper than filtering afterwards).
+const PATCH_EXCLUDES = [
+  '**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml', '**/bun.lockb', '**/composer.lock', '**/Cargo.lock', '**/poetry.lock', '**/Gemfile.lock', '**/go.sum',
+  '**/*.min.js', '**/*.min.css', '**/dist/**', '**/build/**', '**/vendor/**', '**/node_modules/**',
+  ...['.claude', '.opencode', '.cursor', '.windsurf', '.agents', '.codex', '.gemini', '.kiro'].map((d) => `${d}/**`),
+].map((g) => `:(exclude,glob)${g}`);
+
+/**
+ * Attach the first PATCH_LINES lines of each of the newest PATCH_COMMITS commits' diffs (devlog narrator input only).
+ * Never fatal: a huge repo (ENOBUFS) or any git hiccup just means the story is told without diffs.
+ */
 function attachPatches(repo, commits, options) {
-  const out = runGit(repo, ['log', '-p', '--no-color', `--format=${REC}%H`, ...filterArgs(options)]);
+  let out;
+  try {
+    out = runGit(repo, ['log', '-p', '--no-color', `--format=${REC}%H`, ...filterArgs({ ...options, max: PATCH_COMMITS }), '--', ...PATCH_EXCLUDES], { maxBuffer: PATCH_MAX_BUFFER });
+  } catch (err) {
+    if (err instanceof UserFacingError) throw err;
+    console.warn('Không đọc được diff (repo quá lớn?) — bài sẽ chỉ dựa trên message và số liệu.');
+    for (const c of commits) c.patchExcerpt = '';
+    return;
+  }
   const byHash = new Map();
   for (const chunk of out.split(REC)) {
     if (!chunk.trim()) continue;
     const nl = chunk.indexOf('\n');
     const hash = chunk.slice(0, nl).trim();
-    const lines = chunk.slice(nl + 1).split('\n');
+    // Secrets files are dropped BEFORE the line budget so they never eat it (or leak into sessions JSON).
+    const lines = stripSensitiveDiff(chunk.slice(nl + 1)).split('\n');
     const excerpt = lines.slice(0, PATCH_LINES).join('\n').trim();
     byHash.set(hash, lines.length > PATCH_LINES ? `${excerpt}\n… (cắt bớt)` : excerpt);
   }
