@@ -1,0 +1,11 @@
+node_modules/
+.journal/
+*.log
+
+# Never commit AI-kit / workspace files (paid kits, local plans)
+.claude/
+.opencode/
+CLAUDE.md
+AGENTS.md
+plans/
+.journal-preview/

@@ -1,0 +1,2 @@
+{"type":"user","isSidechain":true,"timestamp":"2026-09-20T10:01:30.000Z","cwd":"C:\\Users\\Test\\Code\\Alpha","sessionId":"s1","message":{"role":"user","content":"subagent task FIXTURE-SECRET-SUB"}}
+{"type":"assistant","isSidechain":true,"timestamp":"2026-09-20T10:01:40.000Z","cwd":"C:\\Users\\Test\\Code\\Alpha","sessionId":"s1","message":{"id":"ms1","role":"assistant","model":"glm-5","content":[{"type":"tool_use","name":"Read","input":{}}],"usage":{"input_tokens":1,"output_tokens":1}}}
