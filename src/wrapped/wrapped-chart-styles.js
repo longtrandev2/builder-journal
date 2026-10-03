@@ -50,7 +50,8 @@ export function chartCss() {
 .clock .center-cap{fill:var(--muted);font-size:13px;text-anchor:middle}
 .clock .sweep{stroke:var(--accent);stroke-width:2;stroke-linecap:round;opacity:0;transform-box:view-box;transform-origin:170px 170px}
 .duel-box{margin:clamp(18px,3.4cqi,32px) 0 0;max-width:680px}
-.duel .axis{text-anchor:middle;font-size:11px}
+.duel .axis{text-anchor:middle;font-size:12px}
+@container (max-width:599px){.duel .axis{font-size:14px}}
 .duel rect{transform-box:fill-box}
 .duel .up{fill:var(--accent-2);opacity:.5;transform-origin:50% 100%}
 .duel .down{fill:var(--ink);opacity:.32;transform-origin:50% 0}

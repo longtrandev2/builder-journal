@@ -57,3 +57,10 @@ export function slugify(value) {
   return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd')
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'wrapped';
 }
+
+/** UTC ISO timestamp (agent logs) → local calendar date "YYYY-MM-DD" (what the user lived). */
+export function localIsoDate(iso) {
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}

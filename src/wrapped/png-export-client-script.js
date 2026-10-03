@@ -39,11 +39,23 @@ export function pngExportClient() {
     try {
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
       await frames();
+      // 4:5 roots must come out exactly 1080x1350. If unusually long data still overflows the
+      // tightened export layout, shrink the body a step at a time instead of growing the image.
+      const target = root.dataset.exportWidth ? Math.round(node.offsetWidth * 1.25) : 0;
+      const body = node.querySelector('.body');
+      // Pin SVG sizes at zoom 1 BEFORE shrinking, so the zoom below scales them exactly once.
       inlineSvgStyles(node);
+      for (let z = 1; target && body && node.offsetHeight > target && z > 0.78;) {
+        z -= 0.04;
+        body.style.zoom = z.toFixed(2);
+        await frames();
+      }
+      if (target && node.offsetHeight > target) console.warn('builder-journal: màn này vẫn dài hơn khung ảnh 4:5 — phần cuối có thể bị cắt.');
+      if (target) node.style.height = `${target}px`;
       return await window.htmlToImage.toPng(node, {
         pixelRatio: 2,
         width: node.offsetWidth,
-        height: node.offsetHeight,
+        height: target || node.offsetHeight,
         backgroundColor: getComputedStyle(node).backgroundColor,
         fontEmbedCSS: fontCss,
         filter: (n) => !(n.classList && n.classList.contains('no-export')),
