@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { tryGitAsync } from '../lib/run-git.js';
 import { normalizePath } from './agent-activity-aggregator.js';
+import { mapWithLimit } from '../lib/map-with-limit.js';
 
 function isDir(p) {
   try {
@@ -22,9 +23,9 @@ export async function discoverRepos(activity, { exclude = [] } = {}) {
   const excl = exclude.filter(Boolean).map((x) => ({ raw: String(x).toLowerCase(), norm: normalizePath(x) }));
   const byTop = new Map(); // normalized toplevel -> repo
 
-  // One `git rev-parse` per project folder, all at once (each git start costs ~60 ms on Windows).
+  // One `git rev-parse` per project folder, up to 8 at a time (each git start costs ~60 ms on Windows).
   const projects = activity.projects.filter((p) => p.path && isDir(p.path));
-  const tops = await Promise.all(projects.map((p) => tryGitAsync(p.path, ['rev-parse', '--show-toplevel'])));
+  const tops = await mapWithLimit(projects, 8, (p) => tryGitAsync(p.path, ['rev-parse', '--show-toplevel']));
   projects.forEach((proj, i) => {
     const topRaw = tops[i];
     if (!topRaw) return;

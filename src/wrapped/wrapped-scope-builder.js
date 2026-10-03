@@ -6,6 +6,7 @@ import { tryGit, UserFacingError, resolveRepo } from '../lib/run-git.js';
 import { buildPeriodAsync, periodStats, codeInsertions } from '../extractor/extract-sessions.js';
 import { groupSessions } from '../extractor/session-grouper.js';
 import { readAgentActivity, readAgentEvents } from '../agents/read-agent-activity.js';
+import { mapWithLimit } from '../lib/map-with-limit.js';
 import { discoverRepos } from '../agents/repo-discovery.js';
 
 /** Author identities for person mode: global git identity + --author flags. */
@@ -95,9 +96,10 @@ export async function buildPersonPeriod({ authors, from, exclude = [], include =
   if (!repos.length) throw new UserFacingError('Log agent không trỏ tới repo git nào còn trên máy — thêm bằng --include <đường dẫn>.');
   repos = await confirm(repos);
   if (!repos.length) throw new UserFacingError('Đã bỏ hết repo — không còn gì để wrap.');
-  // All repos read at the same time: total ≈ the slowest repo, not the sum.
-  const reads = await Promise.all(repos.map((repo) =>
-    buildPeriodAsync(repo.path, { authors, from }).then((p) => ({ repo, p }), () => null))); // one unreadable repo never blocks the page
+  // Repos read in parallel (max 8 git processes): total ≈ the slowest repo, not the sum.
+  // One unreadable repo never blocks the page.
+  const reads = await mapWithLimit(repos, 8, (repo) =>
+    buildPeriodAsync(repo.path, { authors, from }).then((p) => ({ repo, p }), () => null));
   const merged = [];
   const perRepo = [];
   for (const r of reads) {
@@ -108,7 +110,7 @@ export async function buildPersonPeriod({ authors, from, exclude = [], include =
   }
   if (!merged.length) throw new UserFacingError(`Không thấy commit nào của ${authors.join(' / ')} trong các repo tìm được.`);
   merged.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
-  const sessions = groupSessions(merged).map((s) => ({ ...s, chapters: [...new Set(s.commits.map((c) => c.chapter))] }));
+  const sessions = groupSessions(merged).map((s) => ({ ...s, chapters: [...new Set(s.commits.map((c) => c.chapter).filter(Boolean))] }));
   perRepo.sort((a, b) => b.commits - a.commits);
   return { period: { commits: merged, sessions, stats: periodStats(merged, sessions), capped: false }, repos: perRepo };
 }
@@ -117,8 +119,9 @@ export async function buildPersonPeriod({ authors, from, exclude = [], include =
  * Share pages must not leak absolute paths (usernames, client folder names): keep repo names only.
  */
 export function shareSafe(ai, repos) {
+  const { corrections, ...aiRest } = ai || {}; // keyword-based estimate: no longer shown anywhere
   const safeAi = ai && {
-    ...ai,
+    ...aiRest,
     projects: (ai.projects || []).map(({ name, prompts, activeMinutes, lastActive }) => ({ name, prompts, activeMinutes, lastActive })),
   };
   const safeRepos = repos && repos.map(({ name, commits, sessions, codeLines }) => ({ name, commits, sessions, codeLines }));

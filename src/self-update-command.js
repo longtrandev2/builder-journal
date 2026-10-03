@@ -9,12 +9,13 @@ export function runSelfUpdate({ current }) {
   console.log(`Bản hiện tại: ${current}. Đang cài bản mới nhất…\n> npm ${UPDATE_ARGS.join(' ')}\n`);
   // Fixed command, no user input: safe through the shell (needed for npm.cmd on Windows).
   const res = spawnSync(`npm ${UPDATE_ARGS.join(' ')}`, { stdio: 'inherit', shell: true, windowsHide: true });
-  if (res.status !== 0) {
+  if (res.error || res.status !== 0) {
+    const why = res.error ? res.error.message : `mã ${res.status}`;
     throw new UserFacingError(
-      `Cập nhật chưa được (mã ${res.status}). Thử tự chạy: npm ${UPDATE_ARGS.join(' ')}` +
+      `Cập nhật chưa được (${why}). Thử tự chạy: npm ${UPDATE_ARGS.join(' ')}` +
       (process.platform === 'win32' ? '' : ' (có thể cần sudo)'),
     );
   }
-  const after = spawnSync('bj --version', { encoding: 'utf8', shell: true, windowsHide: true });
-  console.log(`\nXong. Bản đang dùng: ${String(after.stdout || '').trim() || 'chạy bj --version để xem'}.`);
+  // Don't spawn `bj` again here: on Windows npm just replaced the bj.cmd that is running right now.
+  console.log('\nXong. Mở terminal mới rồi chạy `bj --version` để xem bản mới.');
 }

@@ -74,7 +74,7 @@ export function parseLog(text) {
       numstat,
     });
   }
-  // Oldest first by author date (dates can be out of topo order after rebase — use .order for the tip) — grouping and ledgers assume chronological order.
+  // Oldest first by author date — session grouping and the timeline assume chronological order.
   return commits.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
 }
 

@@ -1,6 +1,5 @@
 // `builder-journal wrapped`: repo (default) or person (--all) scope → aggregate → self-contained
 // HTML (+ card SVG) → open browser. `--week` renders the one-screen weekly mini card instead.
-// Does NOT write the ledger: wrapping is looking back, not "telling" — `last` keeps working after it.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -79,7 +78,7 @@ function writeWeekly(s, theme, opts) {
     commits: period.stats.commits,
     codeLines: period.stats.codeLines,
     chapters: Object.entries(period.stats.chapters) // already sorted by count desc
-      .map(([id, count]) => ({ id, label: CHAPTER_LABELS[id] || id, count, percent: Math.round((count / period.stats.commits) * 100) })),
+      .map(([id, count]) => ({ id, label: CHAPTER_LABELS[id] || id, count, percent: Math.round((count / Math.max(1, period.stats.commits - (period.stats.merges || 0))) * 100) })),
     ai: opts.hideNames && ai ? { ...shareSafe(ai, null).ai, projects: [] } : shareSafe(ai, null).ai,
     hardest: opts.hardest || '',
   };

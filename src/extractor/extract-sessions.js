@@ -1,5 +1,5 @@
 // Composes git-reader → classifier → grouper into one "period" + resolves time windows.
-import { readCommits, readCommitsAsync, isNoiseFile } from './git-reader.js';
+import { readCommitsAsync, isNoiseFile } from './git-reader.js';
 import { groupSessions } from './session-grouper.js';
 import { classifyAll } from './chapter-classifier.js';
 import { UserFacingError } from '../lib/run-git.js';
@@ -68,12 +68,6 @@ export function periodFromCommits(commits, capped = false) {
     chapters: [...new Set(s.commits.map((c) => c.chapter).filter(Boolean))],
   }));
   return { commits, sessions, stats: periodStats(commits, sessions), capped };
-}
-
-/** Read + classify + group. options pass through to readCommits. */
-export function buildPeriod(repo, options) {
-  const { commits, capped } = readCommits(repo, options);
-  return periodFromCommits(commits, capped);
 }
 
 /** Async version: several repos can be read at the same time. */

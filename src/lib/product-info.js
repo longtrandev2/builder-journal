@@ -1,4 +1,4 @@
-// Single place for the install command printed in every output (Wrapped page, devlog, README).
+// Single place for the install/run commands printed on the Wrapped page, cards and README.
 export const PRODUCT_NAME = 'builder-journal';
 export const INSTALL_COMMAND = 'npm i -g builder-journal';
 export const RUN_COMMAND = 'bj wrapped';
