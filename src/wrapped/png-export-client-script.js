@@ -34,6 +34,8 @@ export function pngExportClient() {
     const node = root.cloneNode(true);
     node.removeAttribute('id');
     node.classList.add('exporting');
+    // The companion page stamps its sprite (and the finished speech bubble) into the clone.
+    if (window.bjDecorateExport) window.bjDecorateExport(node, root);
     host.appendChild(node);
     document.body.appendChild(host);
     try {

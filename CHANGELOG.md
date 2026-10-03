@@ -2,6 +2,13 @@
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/), version theo [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Bạn đồng hành pixel (Cam / Lệnh / Cú) trên trang Wrapped: đổi dáng theo từng màn, tự chọn theo agent dùng nhiều nhất, đổi tay trong menu giao diện (nhớ lựa chọn). Có mặt trong ảnh PNG tải về.
+- Màn cuối có "Lời nhắn" từ bạn đồng hành: 2–3 câu dựa trên số liệu thật (giờ giấc, chuỗi ngày, tỉ lệ test/fix, lệnh cho agent…) và một câu chúc. Không bao giờ dùng nội dung lệnh.
+- Số liệu mới: tỉ lệ commit khuya và cuối tuần, khoảng nghỉ dài nhất, số ngày từ commit gần nhất, lệnh theo từng agent, số lần giao việc cho subagent.
+
 ## [0.2.0] — 2026-10-03
 
 ### Removed
