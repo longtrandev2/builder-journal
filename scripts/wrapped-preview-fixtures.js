@@ -65,9 +65,9 @@ export function fixturePerson(overrides = {}) {
     ai: fixtureAi(),
     leverage: fixtureLeverage(),
     repos: [
-      { name: 'PRO.IndieHub', commits: 298, sessions: 96, codeLines: 81293 },
-      { name: 'builder-journal', commits: 41, sessions: 9, codeLines: 6120 },
-      { name: 'landing-2026', commits: 63, sessions: 18, codeLines: 9400 },
+      { name: 'PRO.IndieHub', commits: 298, activeDays: 56, codeLines: 81293 },
+      { name: 'builder-journal', commits: 41, activeDays: 3, codeLines: 6120 },
+      { name: 'landing-2026', commits: 63, activeDays: 12, codeLines: 9400 },
       { name: 'dotfiles', commits: 12, sessions: 6, codeLines: 380 },
       { name: 'vn-invoice-kit', commits: 27, sessions: 8, codeLines: 4210 },
       { name: 'notes', commits: 5, sessions: 3, codeLines: 0 },

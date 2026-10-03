@@ -54,7 +54,7 @@ export function renderWeeklyCardHtml(week, { theme = 'dem' } = {}) {
 <header class="head"><p class="kicker">${icon('calendar-days')}<span>${when}</span></p>${downloadButton()}</header>
 <div class="body">
 <div><p class="owner">Tuần build của ${e(week.displayName)}</p><h1>${e(week.repoName)}</h1></div>
-<div class="stats">${stat(week.codeLines, 'dòng code đã ship', ' lead-stat')}${stat(week.commits, 'commit')}${stat(week.sessions, 'buổi code')}</div>
+<div class="stats">${stat(week.codeLines, 'dòng code đã ship', ' lead-stat')}${stat(week.commits, 'commit')}${stat(week.activeDays, 'ngày có mặt')}</div>
 ${bars ? `<div class="bars">${bars}</div>` : ''}
 ${ai}${hardest}
 </div>
