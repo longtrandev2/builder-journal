@@ -11,7 +11,8 @@ test('prefixChapter maps conventional types, with scope and breaking marker', ()
   assert.equal(prefixChapter('perf(db): index orders'), 'refactor');
   assert.equal(prefixChapter('docs: readme'), 'docs');
   assert.equal(prefixChapter('test(e2e): playwright setup'), 'test');
-  assert.equal(prefixChapter('chore(release): v0.1.0'), 'infra');
+  assert.equal(prefixChapter('build(deps): bump x'), 'infra');
+  assert.equal(prefixChapter('chore(release): v0.1.0'), null, 'chore is a catch-all → diff decides');
   assert.equal(prefixChapter('CI: cache deps'), 'infra', 'case-insensitive');
 });
 

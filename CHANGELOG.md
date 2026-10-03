@@ -5,8 +5,8 @@
 ## [0.1.2] — 2026-10-03
 
 ### Changed
-- Mảng việc: commit có tiền tố Conventional Commits (`feat:`, `fix(api):`, `refactor!:`, `docs:`, `test:`, `chore:`/`ci:`/`build:`…) được phân loại theo tiền tố; chỉ commit không có tiền tố mới dùng hình dạng diff. Trên 628 commit thật: 98% theo tiền tố (trước đây khớp tiền tố chỉ 67%, yếu nhất ở sửa lỗi 46%).
-- Màn "Mảng việc" ghi rõ bao nhiêu % phân loại theo mỗi cách.
+- Mảng việc: commit có tiền tố Conventional Commits (`feat:`, `fix(api):`, `refactor!:`, `docs:`, `test:`, `ci:`/`build:`…) được phân loại theo tiền tố; chỉ commit không có tiền tố mới dùng hình dạng diff. Trên 628 commit thật: 98% theo tiền tố (trước đây khớp tiền tố chỉ 67%, yếu nhất ở sửa lỗi 46%).
+- Màn "Mảng việc" ghi rõ bao nhiêu % phân loại theo mỗi cách. `chore:` không ánh xạ cứng (việc vặt chung chung) — để hình dạng diff quyết định.
 
 ### Docs
 - README: phần Cần có, Chạy lần đầu từng bước (Windows/macOS), File được tạo ở đâu, Gặp lỗi?, Chạy từ mã nguồn.
