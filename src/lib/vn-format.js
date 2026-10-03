@@ -32,3 +32,28 @@ export function fmtDuration(minutes) {
 }
 
 export const UNIT_LABELS = { week: 'tuần', month: 'tháng', quarter: 'quý' };
+
+/** 2.64 → "2,6" (vi-VN decimal comma, trailing ",0" dropped). */
+export function fmtDecimal(n, digits = 1) {
+  const [int, frac = ''] = Number(n).toFixed(digits).split('.');
+  const tail = frac.replace(/0+$/, '');
+  return int.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (tail ? `,${tail}` : '');
+}
+
+/** 11234567 → "11,2 triệu"; 1500000000 → "1,5 tỷ"; small numbers stay grouped ("9.870"). */
+export function fmtCompact(n) {
+  if (n >= 1e9) return `${fmtDecimal(n / 1e9)} tỷ`;
+  if (n >= 1e6) return `${fmtDecimal(n / 1e6)} triệu`;
+  return fmtNum(n);
+}
+
+/** Minutes → whole hours for big totals: 6730 → "112 giờ"; under 2 hours falls back to fmtDuration. */
+export function fmtHours(minutes) {
+  return minutes < 120 ? fmtDuration(Math.round(minutes)) : `${fmtNum(minutes / 60)} giờ`;
+}
+
+/** "PRO.IndieHub – Đêm" → "pro-indiehub-dem": ASCII file-name slug (Vietnamese diacritics + đ folded). */
+export function slugify(value) {
+  return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'wrapped';
+}
