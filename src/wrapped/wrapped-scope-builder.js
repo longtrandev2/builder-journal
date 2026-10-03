@@ -3,9 +3,9 @@
 import path from 'node:path';
 import os from 'node:os';
 import { tryGit, UserFacingError, resolveRepo } from '../lib/run-git.js';
-import { buildPeriod, periodStats, codeInsertions } from '../extractor/extract-sessions.js';
+import { buildPeriodAsync, periodStats, codeInsertions } from '../extractor/extract-sessions.js';
 import { groupSessions } from '../extractor/session-grouper.js';
-import { readAgentActivity } from '../agents/read-agent-activity.js';
+import { readAgentActivity, readAgentEvents } from '../agents/read-agent-activity.js';
 import { discoverRepos } from '../agents/repo-discovery.js';
 
 /** Author identities for person mode: global git identity + --author flags. */
@@ -45,6 +45,16 @@ export function buildLeverage(commits, ai) {
 }
 
 /** AI layer is optional and must never break a wrap. */
+/** Agent-log events read once (or null when disabled / unreadable). */
+export function safeEvents(enabled) {
+  if (!enabled) return null;
+  try {
+    return readAgentEvents();
+  } catch {
+    return null;
+  }
+}
+
 export function safeActivity(options, enabled) {
   if (!enabled) return null;
   try {
@@ -78,25 +88,23 @@ export async function buildPersonPeriod({ authors, from, exclude = [], include =
     throw new UserFacingError('Chế độ --all cần đọc log agent (Claude Code / Codex) để tự tìm repo — chạy lại với --ai, hoặc thêm repo bằng --include <đường dẫn>.');
   }
   const seen = new Set();
-  let repos = [...discoverRepos(activityAll, { exclude }), ...extra].filter((r) => {
+  let repos = [...(await discoverRepos(activityAll, { exclude })), ...extra].filter((r) => {
     const key = path.resolve(r.path).toLowerCase();
     return seen.has(key) ? false : seen.add(key);
   });
   if (!repos.length) throw new UserFacingError('Log agent không trỏ tới repo git nào còn trên máy — thêm bằng --include <đường dẫn>.');
   repos = await confirm(repos);
   if (!repos.length) throw new UserFacingError('Đã bỏ hết repo — không còn gì để wrap.');
+  // All repos read at the same time: total ≈ the slowest repo, not the sum.
+  const reads = await Promise.all(repos.map((repo) =>
+    buildPeriodAsync(repo.path, { authors, from }).then((p) => ({ repo, p }), () => null))); // one unreadable repo never blocks the page
   const merged = [];
   const perRepo = [];
-  for (const repo of repos) {
-    try {
-      const p = buildPeriod(repo.path, { authors, from, withPatch: false });
-      if (!p.commits.length) continue;
-      for (const c of p.commits) c.repo = repo.name;
-      merged.push(...p.commits);
-      perRepo.push({ name: repo.name, path: repo.path, commits: p.stats.commits, sessions: p.stats.sessions, codeLines: p.stats.codeLines });
-    } catch {
-      // One unreadable repo never blocks the person page.
-    }
+  for (const r of reads) {
+    if (!r || !r.p.commits.length) continue;
+    for (const c of r.p.commits) c.repo = r.repo.name;
+    merged.push(...r.p.commits);
+    perRepo.push({ name: r.repo.name, path: r.repo.path, commits: r.p.stats.commits, sessions: r.p.stats.sessions, codeLines: r.p.stats.codeLines });
   }
   if (!merged.length) throw new UserFacingError(`Không thấy commit nào của ${authors.join(' / ')} trong các repo tìm được.`);
   merged.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
