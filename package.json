@@ -1,0 +1,22 @@
+{
+  "name": "builder-journal",
+  "version": "0.1.0",
+  "description": "Biến git của bạn thành Wrapped kiểu Spotify + devlog tiếng Việt. Local-first, không server.",
+  "type": "module",
+  "bin": {
+    "builder-journal": "bin/builder-journal.js",
+    "bj": "bin/builder-journal.js"
+  },
+  "files": ["bin", "src", "README.md"],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": { "node": ">=18" },
+  "keywords": ["git", "devlog", "wrapped", "build-in-public", "cli", "vietnamese"],
+  "author": "longtrandev2",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/longtrandev2/builder-journal.git" },
+  "dependencies": {
+    "commander": "^12.1.0"
+  }
+}
