@@ -9,6 +9,9 @@
 - Màn cuối có "Lời nhắn" từ bạn đồng hành: 2–3 câu dựa trên số liệu thật (giờ giấc, chuỗi ngày, tỉ lệ test/fix, lệnh cho agent…) và một câu chúc. Không bao giờ dùng nội dung lệnh.
 - Số liệu mới: tỉ lệ commit khuya và cuối tuần, khoảng nghỉ dài nhất, số ngày từ commit gần nhất, lệnh theo từng agent, số lần giao việc cho subagent.
 
+### Changed
+- "Buổi code" (ước lượng theo khoảng cách giữa các commit) được thay bằng "ngày có mặt" (số ngày có commit, đếm chính xác) trên trang, card và terminal. Bỏ dòng "Buổi dài nhất" ở màn giờ giấc.
+
 ## [0.2.0] — 2026-10-03
 
 ### Removed
