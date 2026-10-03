@@ -59,6 +59,8 @@ export function periodStats(commits, sessions) {
     insertions: commits.reduce((s, c) => s + c.insertions, 0),
     deletions: commits.reduce((s, c) => s + c.deletions, 0),
     codeLines: commits.reduce((s, c) => s + codeInsertions(c), 0),
+    // How chapters were decided — shown on the page so the split is never a black box.
+    classifiedBy: { prefix: commits.filter((c) => c.chapterSource === 'prefix').length, diff: commits.filter((c) => c.chapterSource !== 'prefix').length },
   };
 }
 
