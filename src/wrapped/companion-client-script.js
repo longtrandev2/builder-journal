@@ -96,6 +96,8 @@ export function companionClient(kit, storageKey) {
   // ---- closing bubble: text is complete in the markup; here it is hidden and typed ----
   const bubbleLines = () => Array.from(document.querySelectorAll('.say-line'));
   const fullText = (p) => p.querySelector('.on').textContent + p.querySelector('.off').textContent;
+  // data-lead-pose sits on the bubble (.say), not on the section.
+  const leadPose = (sec) => sec.querySelector('.say')?.dataset.leadPose || 'wave';
   const showAll = (lines) => lines.forEach((p) => { const t = fullText(p); p.classList.remove('typing'); p.querySelector('.on').textContent = t; p.querySelector('.off').textContent = ''; });
   async function typeNotes(sec) {
     const lines = bubbleLines();
@@ -105,14 +107,15 @@ export function companionClient(kit, storageKey) {
     const on = (i) => lines[i].querySelector('.on');
     const off = (i) => lines[i].querySelector('.off');
     lines.forEach((_, i) => { on(i).textContent = ''; off(i).textContent = texts[i]; });
-    play(sec.dataset.leadPose || 'wave');
+    play(leadPose(sec));
     const q = sec.querySelector('[data-type]'); // let the highlight sentence finish typing first
     await sleep(q ? Math.min(4200, (q.dataset.full || q.textContent).length * 26) + 700 : 500);
     for (let i = 0; i < lines.length; i++) {
       if (i === lines.length - 1) { await sleep(250); if (run === typeRun) play('wave'); }
+      if (run !== typeRun) return;
       lines[i].classList.add('typing');
       for (let k = 1; k <= texts[i].length; k++) {
-        if (run !== typeRun) return;
+        if (run !== typeRun) { lines[i].classList.remove('typing'); return; }
         on(i).textContent = texts[i].slice(0, k);
         off(i).textContent = texts[i].slice(k);
         await sleep(22);
@@ -128,7 +131,7 @@ export function companionClient(kit, storageKey) {
     const p = sec.dataset.pose;
     if (!p) return;
     if (p !== 'notes') { typeRun++; play(p); return; }
-    if (RM.matches || notesDone) { typeRun++; showAll(bubbleLines()); play(notesDone ? 'wave' : sec.dataset.leadPose || 'wave'); return; }
+    if (RM.matches || notesDone) { typeRun++; showAll(bubbleLines()); play(notesDone ? 'wave' : leadPose(sec)); return; }
     typeNotes(sec);
   }
   if ('IntersectionObserver' in window) {
