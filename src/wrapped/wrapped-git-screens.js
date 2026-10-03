@@ -11,7 +11,8 @@ export function chapterMethodNote(by) {
   const shape = 'hình dạng diff (file mới, file đổi tên, tỉ lệ thêm và xoá)';
   if (!total || !by.prefix) return `Phân loại theo ${shape}.`;
   if (!by.diff) return 'Phân loại theo tiền tố commit (feat:, fix:, refactor:…) bạn đã ghi.';
-  const pct = Math.round((by.prefix / total) * 100);
+  // Clamp: a mixed split must never read as 0% or 100%.
+  const pct = Math.min(99, Math.max(1, Math.round((by.prefix / total) * 100)));
   return `${pct}% commit phân loại theo tiền tố bạn ghi (feat:, fix:…), phần còn lại theo ${shape}.`;
 }
 

@@ -16,7 +16,7 @@ test('prefixChapter maps conventional types, with scope and breaking marker', ()
 });
 
 test('free-form or unknown prefixes are NOT parsed', () => {
-  for (const m of ['update stuff', 'fix bug', 'Fixed the thing', 'WIP', 'revert: undo x', 'feat:', 'Merge branch x', '']) {
+  for (const m of ['update stuff', 'fix bug', 'Fixed the thing', 'WIP', 'revert: undo x', 'feat:', 'Merge branch x', '', 'feat : spaced colon', '✨ feat: gitmoji', ':sparkles: add thing', 'Revert "feat: x"', 'fixup! feat: y']) {
     assert.equal(prefixChapter(m), null, m);
   }
 });
@@ -38,4 +38,6 @@ test('classifyAll tags chapterSource and the page note reports the split', () =>
   assert.match(chapterMethodNote({ prefix: 1, diff: 1 }), /^50% commit phân loại theo tiền tố/);
   assert.match(chapterMethodNote({ prefix: 0, diff: 3 }), /^Phân loại theo hình dạng diff/);
   assert.match(chapterMethodNote({ prefix: 3, diff: 0 }), /theo tiền tố commit/);
+  assert.match(chapterMethodNote({ prefix: 1, diff: 299 }), /^1% /, 'never 0% when some commits use a prefix');
+  assert.match(chapterMethodNote({ prefix: 299, diff: 1 }), /^99% /, 'never 100% when some fall back to diff');
 });
