@@ -96,7 +96,8 @@ export function aggregateWrapped(period, { unit = 'week', repoName, displayName 
     unit,
     range: { from: first, to: last, days: Math.round(span / DAY) + 1 },
     hero: { sessions: stats.sessions, commits: stats.commits, chapters: stats.chapterCount, codeLines: stats.codeLines },
-    ticks: commits.map((c) => (Date.parse(c.date) - t0) / span),
+    // Ticks deduped at 0.1% resolution: same picture, ≤1001 lines even for a 5000-commit repo.
+    ticks: [...new Set(commits.map((c) => Math.round(((Date.parse(c.date) - t0) / span) * 1000) / 1000))],
     heatmap: buildHeatmap(perDay),
     activeDays: Object.keys(perDay).length,
     buckets: Object.entries(buckets).sort((a, b) => a[0].localeCompare(b[0])).map(([key, count]) => ({ key, count })),

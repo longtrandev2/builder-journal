@@ -3,7 +3,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import { tryGit, UserFacingError, resolveRepo } from '../lib/run-git.js';
-import { buildPeriod, periodStats } from '../extractor/extract-sessions.js';
+import { buildPeriod, periodStats, codeInsertions } from '../extractor/extract-sessions.js';
 import { groupSessions } from '../extractor/session-grouper.js';
 import { readAgentActivity } from '../agents/read-agent-activity.js';
 import { discoverRepos } from '../agents/repo-discovery.js';
@@ -16,15 +16,31 @@ export function personAuthors(authorFlags = []) {
   return [tryGit(home, ['config', '--global', 'user.name']), tryGit(home, ['config', '--global', 'user.email'])].filter(Boolean);
 }
 
-/** Prompt → commit → line chain. null when either side is missing. */
-export function buildLeverage(hero, ai) {
-  if (!ai || !ai.prompts || !hero.commits) return null;
+/** Commits whose date falls inside the agent-log window (inclusive). */
+export function commitsInRange(commits, range) {
+  const from = Date.parse(range.from);
+  const to = Date.parse(range.to);
+  return commits.filter((c) => {
+    const t = Date.parse(c.date);
+    return t >= from && t <= to;
+  });
+}
+
+/**
+ * Prompt → commit → line chain, computed ONLY inside the agent-log window so both sides cover
+ * the same days. null when there are no prompts or no commits in that window.
+ */
+export function buildLeverage(commits, ai) {
+  if (!ai || !ai.prompts) return null;
+  const inRange = commitsInRange(commits, ai.range);
+  if (!inRange.length) return null;
+  const codeLines = inRange.reduce((s, c) => s + codeInsertions(c), 0);
   return {
     prompts: ai.prompts,
-    commits: hero.commits,
-    codeLines: hero.codeLines,
-    linesPerPrompt: Math.round(hero.codeLines / ai.prompts),
-    commitsPerPrompt: Math.round((hero.commits / ai.prompts) * 100) / 100,
+    commits: inRange.length,
+    codeLines,
+    linesPerPrompt: Math.round(codeLines / ai.prompts),
+    commitsPerPrompt: Math.round((inRange.length / ai.prompts) * 100) / 100,
   };
 }
 
@@ -59,7 +75,7 @@ function includedRepos(include) {
 export async function buildPersonPeriod({ authors, from, exclude = [], include = [], activityAll, confirm = async (r) => r }) {
   const extra = includedRepos(include);
   if (!activityAll && !extra.length) {
-    throw new UserFacingError('Không tìm thấy log agent (Claude Code / Codex) để tự tìm repo — thêm repo bằng --include <đường dẫn>, hoặc chạy `builder-journal wrapped` trong từng repo.');
+    throw new UserFacingError('Chế độ --all cần đọc log agent (Claude Code / Codex) để tự tìm repo — chạy lại với --ai, hoặc thêm repo bằng --include <đường dẫn>.');
   }
   const seen = new Set();
   let repos = [...discoverRepos(activityAll, { exclude }), ...extra].filter((r) => {
@@ -104,12 +120,7 @@ export function shareSafe(ai, repos) {
 /** Commit counts per local hour, limited to the agent-log window (fair prompt-vs-commit comparison). */
 export function commitHoursInRange(commits, range) {
   const hours = Array(24).fill(0);
-  const from = Date.parse(range.from);
-  const to = Date.parse(range.to) + 86400000;
-  for (const c of commits) {
-    const t = Date.parse(c.date);
-    if (t >= from && t <= to) hours[Number(c.date.slice(11, 13))]++;
-  }
+  for (const c of commitsInRange(commits, range)) hours[Number(c.date.slice(11, 13))]++;
   return hours;
 }
 
@@ -120,8 +131,4 @@ export function hideRepoNames(data, aliasMap) {
   if (data.ai) data.ai = { ...data.ai, projects: data.ai.projects.map((p) => ({ ...p, name: rename(p.name) })) };
   if (data.scope === 'repo') data.repoName = rename(data.repoName);
   return data;
-}
-
-export function repoDisplayName(repo) {
-  return path.basename(repo);
 }

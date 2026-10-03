@@ -49,12 +49,16 @@ export async function ensureAiLogConsent(opts, { ask = askTerminal, interactive 
     writeGlobalConfig({ readAgentLogs: false });
     return false;
   }
-  if (opts.ai === true || opts.yes) {
+  if (opts.ai === true) {
     writeGlobalConfig({ readAgentLogs: true });
     return true;
   }
   const stored = readGlobalConfig().readAgentLogs;
-  if (typeof stored === 'boolean') return stored;
+  if (typeof stored === 'boolean') return stored; // --yes never overrides a remembered "no"
+  if (opts.yes) {
+    writeGlobalConfig({ readAgentLogs: true });
+    return true;
+  }
   if (!interactive) {
     console.log('Bỏ qua log agent (chưa được đồng ý) — thêm --ai để bật.');
     return false;
