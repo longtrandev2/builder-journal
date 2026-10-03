@@ -1,6 +1,6 @@
 # builder-journal
 
-Wrapped cho builder thời AI. Một lệnh đọc git của bạn (và log agent nếu có) rồi kể lại đoạn đường vừa đi bằng một trang **Wrapped**: dải phim commit, số buổi code, lịch từng ngày, bạn dành thời gian cho gì, giờ code nhiều nhất — và nếu bạn code cùng agent: bạn đã ra bao nhiêu lệnh, agent đã làm gì cho bạn.
+Wrapped cho builder thời AI. Một lệnh đọc git của bạn (và log agent nếu có) rồi kể lại đoạn đường vừa đi bằng một trang **Wrapped**: dải phim commit, số ngày có mặt, lịch từng ngày, bạn dành thời gian cho gì, giờ code nhiều nhất — và nếu bạn code cùng agent: bạn đã ra bao nhiêu lệnh, agent đã làm gì cho bạn.
 
 **Chạy hoàn toàn trên máy bạn.** Không server, không đăng nhập, không gửi dữ liệu đi đâu. Repo private vẫn dùng được.
 
@@ -89,10 +89,18 @@ Lần đầu chạy, tool hỏi bạn có đồng ý cho đọc log không và n
 
 Claude Code tự xoá log cũ sau khoảng 30 ngày, nên lớp AI chỉ phủ được khoảng đó (trang ghi rõ khoảng ngày).
 
+## Bạn đồng hành và lời nhắn
+
+Một nhân vật pixel đi cùng bạn ở góc màn hình, đổi dáng theo từng màn. Tool tự chọn theo agent bạn ra lệnh nhiều nhất — **Cam** (tinh thần Claude Code), **Lệnh** (tinh thần Codex), hoặc **Cú** khi không có log agent — và bạn đổi được trong menu giao diện. Nhân vật có mặt trong ảnh tải về.
+
+Màn cuối, bạn đồng hành để lại 2–3 **lời nhắn dựa trên số liệu thật** của bạn: code khuya thì nhắc ngủ sớm, chuỗi ngày dài thì nhắc nghỉ, ít test thì nhắc viết test, ra lệnh cho agent nhiều thì khen chỉ đạo khéo… và luôn kết bằng một câu chúc. Lời nhắn không bao giờ dùng nội dung prompt.
+
+Nhân vật tự vẽ, lấy cảm hứng từ tinh thần Claude Code / Codex — không phải linh vật chính thức, không liên kết với Anthropic hay OpenAI.
+
 ## Cách đếm
 
 - **Commit**: mọi commit của bạn, **tính cả merge commit** (trang ghi rõ có bao nhiêu merge). Commit của người khác không tính.
-- **Buổi**: chuỗi commit cách nhau không quá 2 giờ.
+- **Ngày có mặt**: số ngày có ít nhất một commit của bạn (theo giờ trên commit).
 - **Mảng việc** (tính năng, sửa lỗi, dọn code, kiểm thử, tài liệu, hạ tầng): commit có tiền tố [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix(api):`, `refactor!:`, `docs:`, `test:`, `ci:`/`build:`…) được phân loại theo tiền tố (`chore:` để diff quyết định); commit không có tiền tố thì theo hình dạng diff (file mới, đổi tên, tỉ lệ thêm/xoá, loại file). Merge commit không có diff riêng nên không xếp mảng. Trang ghi rõ bao nhiêu % theo mỗi cách.
 - **Dòng code đã ship**: dòng thêm vào file mã nguồn (tính cả code agent viết); bỏ qua tài liệu, cấu hình, lockfile, thư mục build và bộ kit agent (`.claude/`, `.opencode/`…).
 - **Giờ làm thật** (khi có log agent): tổng thời gian giữa các hoạt động cách nhau không quá 30 phút, gộp các phiên chạy song song.
