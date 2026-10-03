@@ -57,6 +57,20 @@ export function companionCss() {
 .say .sign{color:var(--accent);font-weight:700}
 .say .off{visibility:hidden}
 .say .typing .on::after{content:"";display:inline-block;width:.45em;height:1em;margin-right:-.45em;vertical-align:-.14em;background:var(--accent)}
+/* Phones (390x844): the closing screen must fit one viewport so the bubble sits right above the sprite
+   without scrolling. Tighten type and gaps on screen only; the 540px export clone keeps its own sizes. */
+@media (max-width:600px){
+ .s-khep-lai:not(.exporting) .body{padding:10px 0}
+ .s-khep-lai:not(.exporting) .quote{font-size:21px;max-width:none}
+ .s-khep-lai:not(.exporting) .cmd{margin-top:14px;gap:8px}
+ .s-khep-lai:not(.exporting) .cmd code{font-size:13px;padding:8px 12px;min-height:44px}
+ .s-khep-lai:not(.exporting) .cmd .btn{min-height:44px;padding:0 14px;gap:8px}
+ .s-khep-lai:not(.exporting) .note{font-size:13px;line-height:1.45;margin-top:12px}
+ .s-khep-lai:not(.exporting) .attribution{font-size:12px;margin-top:4px}
+ .s-khep-lai:not(.exporting) .made{font-size:12px;margin-top:6px}
+ .s-khep-lai:not(.exporting) .say{margin:14px 0 16px 4px;padding:10px 14px 12px}
+ .s-khep-lai:not(.exporting) .say p{font-size:14.5px;line-height:1.42;margin-top:3px}
+}
 /* PNG export: the screen clone gets a static sprite (frame A) in the footer corner */
 .exporting{--px:3px}
 .buddy-x{position:absolute;left:18px;bottom:12px;width:calc(28*var(--px));height:calc(20*var(--px));z-index:2}
