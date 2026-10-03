@@ -33,9 +33,6 @@ export function screenCss() {
 .facts li{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:10px 0;border-top:1px solid var(--line)}
 .facts span{color:var(--muted)}
 .facts b{font-weight:600;text-align:right}
-.redo{display:flex;gap:12px;align-items:flex-start;margin-top:clamp(20px,4cqi,36px);padding:14px 16px;border-left:3px solid var(--accent-2);border-radius:0 12px 12px 0;background:var(--surface);font-size:clamp(15px,2.5cqi,19px);max-width:62ch}
-.redo .ico{color:var(--accent);margin-top:3px}
-.redo b{color:var(--accent)}
 .stack{display:flex;gap:3px;height:clamp(14px,2.4cqi,22px);border-radius:999px;overflow:hidden;margin-top:clamp(20px,4cqi,36px)}
 .seg{flex-basis:0;min-width:4px;transform-origin:left center}
 .seg-edits{background:var(--accent-2)}.seg-commands{background:var(--ink);opacity:.72}.seg-reads{background:var(--ink);opacity:.36}.seg-other{background:var(--line)}

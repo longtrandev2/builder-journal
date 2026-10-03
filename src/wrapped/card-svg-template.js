@@ -1,7 +1,7 @@
 // 1200×630 share card (README / blog / OG image). Standalone SVG: colors baked in, no external refs.
 // Note: Facebook upload does not accept SVG — for FB, screenshot a Wrapped screen instead.
 import { escapeHtml as e, fmtNum, fmtRange } from '../lib/vn-format.js';
-import { NPX_COMMAND } from '../lib/product-info.js';
+import { TRY_LINE } from '../lib/product-info.js';
 import { PALETTES } from './wrapped-theme-styles.js';
 
 const NUM_FONT = 'Bahnschrift, DIN Condensed, Avenir Next Condensed, Arial Narrow, sans-serif';
@@ -28,7 +28,7 @@ export function renderCardSvg(card, theme = 'dem') {
 <text x="80" y="262" font-family="${TEXT_FONT}" font-size="30" fill="${p.muted}">${e(fmtRange(card.from, card.to))}</text>
 ${stats}
 <g stroke="${p.accent}" stroke-width="1.5" opacity="0.7">${ticks}</g>
-<text x="80" y="592" font-family="${TEXT_FONT}" font-size="24" fill="${p.muted}">${e(NPX_COMMAND)}</text>
+<text x="80" y="592" font-family="${TEXT_FONT}" font-size="24" fill="${p.muted}">${e(TRY_LINE)}</text>
 </svg>
 `;
 }

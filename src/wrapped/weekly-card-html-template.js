@@ -1,7 +1,7 @@
 // One-screen weekly mini-Wrapped: a 4:5 card (exports as 1080x1350 PNG) on a themed page.
 // Same themes, font, motion and export pipeline as the full Wrapped page.
 import { escapeHtml as e, fmtNum, fmtDate, fmtRange, fmtHours, slugify } from '../lib/vn-format.js';
-import { NPX_COMMAND } from '../lib/product-info.js';
+import { TRY_LINE } from '../lib/product-info.js';
 import { icon } from '../vendor/lucide-icons.js';
 import { renderPageShell } from './wrapped-page-shell.js';
 import { chartCss } from './wrapped-chart-styles.js';
@@ -43,7 +43,7 @@ export function renderWeeklyCardHtml(week, { theme = 'dem' } = {}) {
 <span class="bar-label">${e(c.label)}</span><span class="bar-pct num">${Math.round(c.percent)}%</span>
 <div class="bar-track"><div class="bar-fill" style="width:${Math.max(1, Math.round(c.percent))}%"></div></div></div>`).join('');
   const ai = week.ai
-    ? `<p class="ai-line">${icon('message-square-text')}<span><b>${fmtNum(week.ai.prompts)} lệnh</b> cho agent, <b>${fmtHours(week.ai.activeMinutes)}</b> làm việc thật, bảo làm lại <b>${fmtNum(week.ai.corrections)} lần</b>.</span></p>` : '';
+    ? `<p class="ai-line">${icon('message-square-text')}<span><b>${fmtNum(week.ai.prompts)} lệnh</b> cho agent, <b>${fmtHours(week.ai.activeMinutes)}</b> làm việc thật.</span></p>` : '';
   const hardest = week.hardest ? `<p class="hardest"><span>Khó nhất tuần này</span>${e(week.hardest)}</p>` : '';
   const file = `${slugify(week.repoName)}-tuan-${String(week.range.from).slice(0, 10)}.png`;
   // All commits on one day would read "Tuần 03/10 – 03/10/2026": name the week by its last day instead.
@@ -58,7 +58,7 @@ export function renderWeeklyCardHtml(week, { theme = 'dem' } = {}) {
 ${bars ? `<div class="bars">${bars}</div>` : ''}
 ${ai}${hardest}
 </div>
-<footer class="foot"><span>Builder Wrapped</span><span>${e(NPX_COMMAND)} wrapped</span></footer>
+<footer class="foot"><span>Builder Wrapped</span><span>${e(TRY_LINE)}</span></footer>
 </article></main>`;
   return renderPageShell({ title: `${week.repoName}: tuần ${fmtRange(week.range.from, week.range.to)}`, theme, css: chartCss() + screenCss() + WEEK_CSS, body });
 }
