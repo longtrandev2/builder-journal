@@ -31,15 +31,17 @@ bj wrapped
 | `bj since 3d` / `bj since 2026-07-01` | Devlog cho một khoảng; khoảng dài hơn 14 ngày sẽ kể gộp theo tuần |
 | `bj status` | Đã kể tới đâu, còn bao nhiêu commit chưa kể |
 
-Tuỳ chọn hay dùng: `--repo <đường dẫn>`, `--author "<tên trong git>"` (lặp lại được), `--theme đêm|bình-minh|giấy`, `--unit week|month|quarter`, `--since 90d`, `--exclude ten-repo`, `--no-ai`, `--no-open`.
+Tuỳ chọn hay dùng: `--repo <đường dẫn>`, `--author "<tên trong git>"` (lặp lại được), `--theme đêm|bình-minh|giấy`, `--unit week|month|quarter`, `--since 90d`, `--no-open`.
+
+Riêng `wrapped`: `--all` kèm `--include <đường dẫn>` / `--exclude <tên>` / `--hide-names` (đổi tên repo thành Repo A, B… trên trang và ảnh), `--ai` / `--no-ai` (bật/tắt đọc log agent, nhớ lựa chọn), `-y, --yes` (không hỏi). Riêng `last`/`since`: `-y, --yes` (đồng ý gửi diff cho claude ở repo này), `--narrator manual`, `--narrative <file>`.
 
 ## Lớp AI (nếu bạn code bằng agent)
 
-Nếu máy có log của **Claude Code** (`~/.claude/projects`) hoặc **Codex** (`~/.codex/sessions`, bản beta), Wrapped có thêm 2 màn: bạn đã ra bao nhiêu lệnh, ngồi lái agent bao nhiêu giờ thật, bảo agent làm lại mấy lần, agent đã sửa bao nhiêu file, chạy bao nhiêu lệnh.
+Nếu máy có log của **Claude Code** (`~/.claude/projects`) hoặc **Codex** (`~/.codex/sessions`, bản beta), Wrapped có thêm 3 màn: *Bạn đã chỉ đạo* (bao nhiêu lệnh, bao nhiêu giờ làm thật, bảo agent làm lại mấy lần, giờ ra lệnh so với giờ ship), *Agent đã làm* (sửa bao nhiêu file, chạy bao nhiêu lệnh, model nào) và *Đòn bẩy* (lệnh → commit → dòng, chỉ tính trong khoảng có log).
 
-Trang chỉ chứa **số tổng**. Không có chữ nào từ prompt của bạn. Tắt hẳn bằng `--no-ai`.
+Lần đầu chạy, tool hỏi bạn có đồng ý cho đọc log không và nhớ lựa chọn. Không phải terminal tương tác thì mặc định không đọc — thêm `--ai`. Trang chỉ chứa **số tổng**, không có chữ nào từ prompt của bạn.
 
-Lưu ý: Claude Code tự xoá log sau khoảng 30 ngày, nên lớp AI chỉ phủ được khoảng đó. Chạy `bj wrapped --week` mỗi tuần để giữ lại.
+Lưu ý: Claude Code tự xoá log sau khoảng 30 ngày, nên lớp AI chỉ phủ được khoảng đó (trang ghi rõ khoảng ngày). Bản này chưa lưu lại số liệu cũ — sẽ có ở bản sau.
 
 ## Devlog
 
@@ -76,4 +78,4 @@ Node.js 18+, git. Chạy được trên Windows, macOS, Linux.
 
 ## License
 
-MIT. Thư viện nhúng trong trang: anime.js (MIT), Lucide (ISC), Be Vietnam Pro (OFL).
+MIT. Thư viện nhúng trong trang: anime.js (MIT), html-to-image (MIT), Lucide (ISC), Be Vietnam Pro (OFL); license đầy đủ đi kèm trong thư mục license của thư viện nhúng.

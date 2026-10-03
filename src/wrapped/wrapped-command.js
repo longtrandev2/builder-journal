@@ -16,6 +16,7 @@ import { renderCardSvg } from './card-svg-template.js';
 import { buildLeverage, safeActivity, buildPersonPeriod, personAuthors, shareSafe, commitHoursInRange, hideRepoNames } from './wrapped-scope-builder.js';
 import { ensureAiLogConsent, confirmRepos, aliasNames } from '../lib/user-consent.js';
 import { fmtNum, fmtRange } from '../lib/vn-format.js';
+import { CHAPTER_LABELS } from '../extractor/chapter-classifier.js';
 
 const WEEK_MS = 7 * 86400000;
 
@@ -46,7 +47,8 @@ async function buildScope(opts, from) {
     const ai = safeActivity({ since: from, projects: repos.map((r) => r.path) }, aiAllowed);
     const outDir = path.join(os.homedir(), '.builder-journal');
     fs.mkdirSync(outDir, { recursive: true });
-    const displayName = authors[0] || os.userInfo().username;
+    // Never put an email on a share page: first identity that is not an email, else the OS user.
+    const displayName = authors.find((a) => !a.includes('@')) || os.userInfo().username;
     return { period, ai, repos, name: displayName, displayName, outDir, config: { theme: 'dem', unit: 'month' }, scope: 'person' };
   }
   const repo = resolveRepo(opts.repo);
@@ -67,13 +69,14 @@ function writeWeekly(s, theme, opts) {
   const { period, ai } = s;
   const week = {
     displayName: s.displayName,
-    repoName: s.name,
+    repoName: opts.hideNames ? 'Repo A' : s.name,
     range: { from: period.commits[0].date, to: period.commits[period.commits.length - 1].date },
     sessions: period.stats.sessions,
     commits: period.stats.commits,
     codeLines: period.stats.codeLines,
-    chapters: Object.entries(period.stats.chapters).map(([id, count]) => ({ id, count, percent: Math.round((count / period.stats.commits) * 100) })),
-    ai: shareSafe(ai, null).ai,
+    chapters: Object.entries(period.stats.chapters) // already sorted by count desc
+      .map(([id, count]) => ({ id, label: CHAPTER_LABELS[id] || id, count, percent: Math.round((count / period.stats.commits) * 100) })),
+    ai: opts.hideNames && ai ? { ...shareSafe(ai, null).ai, projects: [] } : shareSafe(ai, null).ai,
     hardest: opts.hardest || '',
   };
   const file = path.join(s.outDir, `weekly-card-${dateStamp()}.html`);
@@ -98,10 +101,11 @@ export async function runWrapped(opts) {
   }
 
   const data = aggregateWrapped(s.period, { unit: opts.unit || s.config.unit, repoName: s.name, displayName: s.displayName });
-  Object.assign(data, { ...shareSafe(s.ai, s.repos), leverage: buildLeverage(data.hero, s.ai), scope: s.scope });
+  Object.assign(data, { ...shareSafe(s.ai, s.repos), leverage: buildLeverage(s.period.commits, s.ai), scope: s.scope });
   if (data.ai) {
     const inRange = commitHoursInRange(s.period.commits, data.ai.range);
-    if (inRange.some(Boolean)) data.ai.commitHours = inRange; // else: no commits in the log window → keep full-history hours
+    // No commits inside the log window → null: the screen drops the prompt-vs-commit comparison.
+    data.ai.commitHours = inRange.some(Boolean) ? inRange : null;
   }
   if (opts.hideNames) {
     const names = [...(data.repos || []).map((r) => r.name), ...(data.ai?.projects || []).map((p) => p.name), ...(s.scope === 'repo' ? [s.name] : [])];
