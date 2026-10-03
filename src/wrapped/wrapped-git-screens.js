@@ -5,6 +5,18 @@ import { barcodeSvg, heatmapSvg, bucketsSvg, heatmapCapPx, COMPACT_WEEKS } from 
 import { clockSvg } from './wrapped-clock-charts.js';
 import { count } from './wrapped-screen-frame.js';
 
+/** Says honestly how the split was decided: conventional prefixes first, diff shape for the rest. */
+export function chapterMethodNote(by) {
+  const total = (by?.prefix || 0) + (by?.diff || 0);
+  const shape = 'hình dạng diff (file mới, file đổi tên, tỉ lệ thêm và xoá)';
+  if (!total || !by.prefix) return `Phân loại theo ${shape}.`;
+  if (!by.diff) return 'Phân loại theo tiền tố commit (feat:, fix:, refactor:…) bạn đã ghi.';
+  // Clamp: a mixed split must never read as 0% or 100%.
+  const pct = Math.min(99, Math.max(1, Math.round((by.prefix / total) * 100)));
+  return `${pct}% commit phân loại theo tiền tố bạn ghi (feat:, fix:…), phần còn lại theo ${shape}.`;
+}
+
+
 const PERSONAS = { khuya: 'Cú đêm chính hiệu.', toi: 'Người của ca tối.', chieu: 'Nhịp đều buổi chiều.', sang: 'Chim dậy sớm.' };
 
 export function screenOpen(d) {
@@ -59,7 +71,7 @@ export function screenChapters(d) {
     id: 'mang-viec', kicker: 'Mảng việc', icon: 'layers', moment: 'bars',
     body: `<h2>Phần lớn thời gian dành cho <span class="hl">${e(top.label.toLowerCase())}</span>.</h2>
 <div class="bars">${rows}</div>
-<p class="note">Phân loại theo hình dạng diff (file mới, file đổi tên, tỉ lệ thêm và xoá), không đọc commit message.</p>`,
+<p class="note">${chapterMethodNote(d.classifiedBy)}</p>`,
   };
 }
 
