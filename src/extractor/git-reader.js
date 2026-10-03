@@ -1,12 +1,10 @@
-// Reads author-filtered, non-merge commits with per-file numstat (+ optional patch excerpts).
-import { runGit, UserFacingError } from '../lib/run-git.js';
-import { stripSensitiveDiff } from '../narrator/secret-redactor.js';
+// Reads the author's commits (merge commits included, flagged isMerge) with per-file numstat.
+import { runGit, runGitAsync } from '../lib/run-git.js';
 
 const REC = '\x1e';
 const FIELD = '\x1f';
-const HEADER_FORMAT = `--format=${REC}%H${FIELD}%an${FIELD}%ae${FIELD}%aI${FIELD}%s`;
+const HEADER_FORMAT = `--format=${REC}%H${FIELD}%P${FIELD}%an${FIELD}%ae${FIELD}%aI${FIELD}%s`;
 export const MAX_COMMITS = 5000;
-const PATCH_LINES = 200;
 
 // Generated / vendored files (lockfiles, builds, AI-agent kits): counted as touched, never as "lines written".
 const NOISE_RE = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|composer\.lock|Cargo\.lock|poetry\.lock|Gemfile\.lock|go\.sum)$|\.min\.(js|css)$|(^|\/)(dist|build|vendor|node_modules)\/|(^|\/)\.(claude|opencode|cursor|windsurf|agents|codex|gemini|kiro)\//;
@@ -41,7 +39,7 @@ export function parseLog(text) {
   for (const chunk of text.split(REC)) {
     if (!chunk.trim()) continue;
     const [header, ...lines] = chunk.split('\n');
-    const [hash, author, email, date, ...subject] = header.split(FIELD);
+    const [hash, parents, author, email, date, ...subject] = header.split(FIELD);
     const numstat = [];
     const created = new Set();
     for (const line of lines) {
@@ -64,6 +62,8 @@ export function parseLog(text) {
     commits.push({
       hash,
       order: order++, // position in git log output: 0 = branch tip side (topological newest)
+      // Merge commits count as commits (they are real work steps: PRs, git-flow) but carry no own diff.
+      isMerge: String(parents || '').trim().split(/\s+/).filter(Boolean).length > 1,
       author,
       email,
       date,
@@ -78,59 +78,24 @@ export function parseLog(text) {
   return commits.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
 }
 
-/** Build the shared filter args: authors, date window or revision range, no merges, cap. */
+/** Build the shared filter args: authors, date window or revision range, cap. */
 function filterArgs({ authors, from, to, revRange, max = MAX_COMMITS }) {
-  const args = ['--no-merges', `--max-count=${max}`, ...authorArgs(authors)];
+  const args = [`--max-count=${max}`, ...authorArgs(authors)];
   if (from) args.push(`--since=${from}`);
   if (to) args.push(`--until=${to}`);
   args.push(revRange || 'HEAD');
   return args;
 }
 
-/**
- * Read commits. options: { authors, from, to, revRange, withPatch }.
- * Returns { commits, capped } — capped=true when MAX_COMMITS was hit.
- */
+const logArgs = (options) => ['log', '-M', '--numstat', '--summary', HEADER_FORMAT, ...filterArgs(options)];
+const result = (commits) => ({ commits, capped: commits.length >= MAX_COMMITS });
+
+/** Read commits. options: { authors, from, to, revRange }. Returns { commits, capped }. */
 export function readCommits(repo, options = {}) {
-  const out = runGit(repo, ['log', '-M', '--numstat', '--summary', HEADER_FORMAT, ...filterArgs(options)]);
-  const commits = parseLog(out);
-  if (options.withPatch && commits.length) attachPatches(repo, commits, options);
-  return { commits, capped: commits.length >= MAX_COMMITS };
+  return result(parseLog(runGit(repo, logArgs(options))));
 }
 
-// Diffs are only worth reading for the newest commits; the narrator budget is ~30 KB anyway.
-const PATCH_COMMITS = 100;
-const PATCH_MAX_BUFFER = 64 * 1024 * 1024;
-// Pathspec excludes keep lockfiles / builds / agent kits out of `git log -p` (cheaper than filtering afterwards).
-const PATCH_EXCLUDES = [
-  '**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml', '**/bun.lockb', '**/composer.lock', '**/Cargo.lock', '**/poetry.lock', '**/Gemfile.lock', '**/go.sum',
-  '**/*.min.js', '**/*.min.css', '**/dist/**', '**/build/**', '**/vendor/**', '**/node_modules/**',
-  ...['.claude', '.opencode', '.cursor', '.windsurf', '.agents', '.codex', '.gemini', '.kiro'].map((d) => `${d}/**`),
-].map((g) => `:(exclude,glob)${g}`);
-
-/**
- * Attach the first PATCH_LINES lines of each of the newest PATCH_COMMITS commits' diffs (devlog narrator input only).
- * Never fatal: a huge repo (ENOBUFS) or any git hiccup just means the story is told without diffs.
- */
-function attachPatches(repo, commits, options) {
-  let out;
-  try {
-    out = runGit(repo, ['log', '-p', '--no-color', `--format=${REC}%H`, ...filterArgs({ ...options, max: PATCH_COMMITS }), '--', ...PATCH_EXCLUDES], { maxBuffer: PATCH_MAX_BUFFER });
-  } catch (err) {
-    if (err instanceof UserFacingError) throw err;
-    console.warn('Không đọc được diff (repo quá lớn?) — bài sẽ chỉ dựa trên message và số liệu.');
-    for (const c of commits) c.patchExcerpt = '';
-    return;
-  }
-  const byHash = new Map();
-  for (const chunk of out.split(REC)) {
-    if (!chunk.trim()) continue;
-    const nl = chunk.indexOf('\n');
-    const hash = chunk.slice(0, nl).trim();
-    // Secrets files are dropped BEFORE the line budget so they never eat it (or leak into sessions JSON).
-    const lines = stripSensitiveDiff(chunk.slice(nl + 1)).split('\n');
-    const excerpt = lines.slice(0, PATCH_LINES).join('\n').trim();
-    byHash.set(hash, lines.length > PATCH_LINES ? `${excerpt}\n… (cắt bớt)` : excerpt);
-  }
-  for (const c of commits) c.patchExcerpt = byHash.get(c.hash) || '';
+/** Async version — used to read several repos in parallel. */
+export async function readCommitsAsync(repo, options = {}) {
+  return result(parseLog(await runGitAsync(repo, logArgs(options))));
 }
