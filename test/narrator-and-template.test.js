@@ -39,6 +39,6 @@ test('FB template: stats line, optional lines, transparency, no emoji', () => {
   assert.match(post, /Nổi nhất: H/);
   assert.ok(!post.includes('Vấp thật'));
   assert.ok(post.includes(TRANSPARENCY_LINE));
-  assert.ok(post.includes('npx github:longtrandev2/builder-journal'));
+  assert.ok(post.includes('npx builder-journal'));
   assert.ok(!/\p{Extended_Pictographic}/u.test(post), 'no emoji');
 });
