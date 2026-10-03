@@ -80,13 +80,16 @@ export function screenAgent(d) {
 export function screenLeverage(d) {
   const lv = d.leverage;
   const node = (n, label, cls = '') => `<div class="node${cls}">${count(n, 'big num')}<span>${label}</span></div>`;
-  const perCommit = lv.commitsPerPrompt > 0 ? fmtDecimal(1 / lv.commitsPerPrompt) : null;
+  // "cứ 0,9 lệnh thành một commit" reads wrong: flip to commits-per-prompt when a prompt yields >= 1 commit.
+  const perCommit = !(lv.commitsPerPrompt > 0) ? ''
+    : lv.commitsPerPrompt >= 1 ? `, mỗi lệnh ra <b>${fmtDecimal(lv.commitsPerPrompt)} commit</b>`
+      : `, cứ <b>${fmtDecimal(1 / lv.commitsPerPrompt)} lệnh</b> thành một commit`;
   const range = d.ai?.range ? ` Tính trong khoảng có log agent, ${fmtRange(d.ai.range.from, d.ai.range.to, ' đến ')}.` : '';
   return {
     id: 'don-bay', kicker: 'Đòn bẩy', icon: 'link', moment: 'chain',
     body: `<h2>Mỗi lệnh của bạn đi được bao xa.</h2>
 <div class="chain">${node(lv.prompts, 'lệnh')}<i class="link" aria-hidden="true"></i>${node(lv.commits, 'commit')}<i class="link" aria-hidden="true"></i>${node(lv.codeLines, 'dòng code', ' last')}</div>
-<p class="lead">Trung bình một lệnh ra <b>${fmtDecimal(lv.linesPerPrompt, 0)} dòng code</b>${perCommit ? `, cứ <b>${perCommit} lệnh</b> thành một commit` : ''}.</p>
+<p class="lead">Trung bình một lệnh ra <b>${fmtDecimal(lv.linesPerPrompt, 0)} dòng code</b>${perCommit}.</p>
 <p class="note">Dòng code tính cả phần agent viết, chỉ file mã nguồn.${range}</p>`,
   };
 }
