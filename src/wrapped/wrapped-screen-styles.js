@@ -12,7 +12,7 @@ export function screenCss() {
 .hero-note{color:var(--muted);font-size:15px;margin-top:4px}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;border-top:1px solid var(--line);padding-top:18px}
 .stat .big{display:block;font-size:clamp(26px,8.4cqi,64px);white-space:nowrap}
-.stat-label{display:block;color:var(--muted);font-size:14px;line-height:1.35;margin-top:6px}
+.stat-label{display:block;color:var(--muted);font-size:14px;line-height:1.35;margin-top:6px;text-wrap:balance}
 @container (min-width:720px){
  .hero{grid-template-columns:minmax(0,1fr) auto;align-items:end}
  .mega{font-size:clamp(64px,min(17cqi,calc(90cqi / var(--len,6))),230px)}
@@ -52,8 +52,8 @@ export function screenCss() {
 .m-bar{height:8px;border-radius:99px;background:var(--heat0);overflow:hidden}
 .m-bar i{display:block;height:100%;border-radius:99px;background:var(--accent-2);transform-origin:left center}
 .models .num{text-align:right;color:var(--muted)}
-.tokens .big{display:block;font-size:clamp(34px,8cqi,64px)}
-.tokens .note{margin-top:8px}
+.tokens .big{display:block;font-size:clamp(34px,8cqi,64px);line-height:1.05}
+.tokens .note{margin-top:12px}
 .chain{display:flex;flex-direction:column;align-items:flex-start;margin-top:clamp(24px,5cqi,48px)}
 .node{display:flex;align-items:baseline;gap:12px}
 .node .big{font-size:clamp(44px,min(13cqi,calc(80cqi / var(--len,4))),112px)}
@@ -72,5 +72,22 @@ export function screenCss() {
 .quote .typed::after{content:"";display:inline-block;width:.08em;height:.9em;margin-left:.04em;background:var(--accent);vertical-align:-.08em}
 .cmd{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;margin-top:clamp(24px,5cqi,44px)}
 .cmd code{display:flex;align-items:center;min-height:48px;padding:10px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font:500 15px/1.3 ui-monospace,Consolas,"SF Mono",monospace;overflow-wrap:anywhere}
-.made{color:var(--muted);font-size:13px;margin-top:20px}`;
+.made{color:var(--muted);font-size:13px;margin-top:20px}
+@container (min-width:600px){.compact-only{display:none}}
+/* Short landscape windows (1366x768 laptops): type is sized by width (cqi), so cap the tall
+   pieces by viewport height too. Never applies to the 540px export clone (.exporting). */
+@media (min-aspect-ratio:4/3) and (max-height:860px){
+ .screen:not(.exporting) h2{font-size:min(clamp(28px,6.4cqi,58px),6.6vh)}
+ .screen:not(.exporting) .lead{font-size:min(clamp(18px,3.4cqi,26px),3.2vh)}
+ .screen:not(.exporting) .note{margin-top:min(clamp(18px,3cqi,32px),2.4vh)}
+ .screen.s-mo-dau:not(.exporting) h1{font-size:min(clamp(36px,min(15cqi,calc(150cqi / var(--len,8))),168px),19vh)}
+ .screen.s-con-so:not(.exporting) .mega{font-size:min(clamp(64px,min(17cqi,calc(90cqi / var(--len,6))),230px),24vh)}
+ .screen:not(.exporting) .barcode{height:min(clamp(64px,15cqi,132px),12vh)}
+ .screen:not(.exporting) .film-wrap{margin-top:min(clamp(28px,7cqi,72px),4vh)}
+ .screen:not(.exporting) .heat-wrap{margin-top:min(clamp(18px,4cqi,40px),2vh)}
+ .screen:not(.exporting) .buckets{height:min(48px,5vh)}
+ .screen:not(.exporting) .bars{gap:min(clamp(14px,2.6cqi,24px),1.8vh);margin-top:min(clamp(20px,4cqi,40px),3vh)}
+ .screen:not(.exporting) .agent-meta{margin-top:min(clamp(22px,4cqi,40px),3vh)}
+ .screen.s-don-bay:not(.exporting) .lead,.screen.s-nhip-ngay:not(.exporting) .lead{margin-top:min(clamp(16px,3cqi,28px),2vh)}
+}`;
 }

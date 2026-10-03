@@ -1,6 +1,6 @@
 // One-screen weekly mini-Wrapped: a 4:5 card (exports as 1080x1350 PNG) on a themed page.
 // Same themes, font, motion and export pipeline as the full Wrapped page.
-import { escapeHtml as e, fmtNum, fmtRange, fmtHours, slugify } from '../lib/vn-format.js';
+import { escapeHtml as e, fmtNum, fmtDate, fmtRange, fmtHours, slugify } from '../lib/vn-format.js';
 import { NPX_COMMAND } from '../lib/product-info.js';
 import { icon } from '../vendor/lucide-icons.js';
 import { renderPageShell } from './wrapped-page-shell.js';
@@ -13,6 +13,9 @@ const WEEK_CSS = `
 .week-card{min-height:auto;overflow:visible;width:100%;max-width:540px;aspect-ratio:4/5;border-radius:20px;border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.22);padding:22px 24px}
 .week-card::before{left:12px!important}
 .week-card .body{padding:18px 0;justify-content:flex-start;gap:18px}
+.week-card .stats{margin-top:auto}
+.week-card .foot{padding-right:0;min-height:0;font-size:12px}
+.week-card .foot span:first-child{white-space:nowrap}.week-card .foot span:last-child{text-align:right;overflow-wrap:anywhere}
 .week-card h1{font-size:clamp(30px,10cqi,52px)}
 .week-card .owner{margin-bottom:.3em}
 .week-card .stats{grid-template-columns:repeat(3,minmax(0,1fr));border-left:0;padding:16px 0 0;border-top:1px solid var(--line)}
@@ -43,9 +46,12 @@ export function renderWeeklyCardHtml(week, { theme = 'dem' } = {}) {
     ? `<p class="ai-line">${icon('message-square-text')}<span><b>${fmtNum(week.ai.prompts)} lệnh</b> cho agent, <b>${fmtHours(week.ai.activeMinutes)}</b> làm việc thật, bảo làm lại <b>${fmtNum(week.ai.corrections)} lần</b>.</span></p>` : '';
   const hardest = week.hardest ? `<p class="hardest"><span>Khó nhất tuần này</span>${e(week.hardest)}</p>` : '';
   const file = `${slugify(week.repoName)}-tuan-${String(week.range.from).slice(0, 10)}.png`;
+  // All commits on one day would read "Tuần 03/10 – 03/10/2026": name the week by its last day instead.
+  const sameDay = String(week.range.from).slice(0, 10) === String(week.range.to).slice(0, 10);
+  const when = sameDay ? `Tuần đến ${fmtDate(week.range.to)}` : `Tuần ${fmtRange(week.range.from, week.range.to)}`;
   const body = `<main class="week-page">
 <article class="screen week-card" data-moment="bars" data-export-root data-export-width="540" data-export-name="${e(file)}" aria-label="Tuần build">
-<header class="head"><p class="kicker">${icon('calendar-days')}<span>Tuần ${fmtRange(week.range.from, week.range.to)}</span></p>${downloadButton()}</header>
+<header class="head"><p class="kicker">${icon('calendar-days')}<span>${when}</span></p>${downloadButton()}</header>
 <div class="body">
 <div><p class="owner">Tuần build của ${e(week.displayName)}</p><h1>${e(week.repoName)}</h1></div>
 <div class="stats">${stat(week.codeLines, 'dòng code đã ship', ' lead-stat')}${stat(week.commits, 'commit')}${stat(week.sessions, 'buổi code')}</div>

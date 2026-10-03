@@ -38,7 +38,7 @@ export function screenHero(d) {
 export function screenHeatmap(d) {
   const hm = d.heatmap;
   const notes = [`Cột nhỏ bên dưới: số commit mỗi ${UNIT_LABELS[d.unit] || 'tuần'}.`];
-  if (hm.weeks.length > COMPACT_WEEKS) notes.push(`Màn hình hẹp chỉ hiện ${COMPACT_WEEKS} tuần sôi nổi nhất.`);
+  if (hm.weeks.length > COMPACT_WEEKS) notes.push(`<span class="compact-only">Lịch ở đây chỉ hiện ${COMPACT_WEEKS} tuần sôi nổi nhất.</span>`);
   if (hm.truncated) notes.push('Lịch hiển thị tối đa 53 tuần gần nhất.');
   return {
     id: 'nhip-ngay', kicker: 'Nhịp từng ngày', icon: 'calendar-days', moment: 'heat',

@@ -8,7 +8,7 @@ export function barcodeSvg(ticks) {
     const x = (t * 1000).toFixed(1);
     return `<line x1="${x}" x2="${x}" y1="0" y2="100"/>`;
   }).join('');
-  return `<div class="film"><svg class="barcode" viewBox="0 0 1000 100" preserveAspectRatio="none" role="img" aria-label="${ticks.length} commit trên trục thời gian"><g>${lines}</g></svg><span class="playhead" aria-hidden="true"></span></div>`;
+  return `<div class="film"><svg class="barcode" viewBox="0 0 1000 100" preserveAspectRatio="none" role="img" aria-label="Các commit xếp trên trục thời gian"><g>${lines}</g></svg><span class="playhead" aria-hidden="true"></span></div>`;
 }
 
 const CELL = 12;
