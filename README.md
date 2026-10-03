@@ -4,21 +4,65 @@ Nhật ký build chạy local cho thời AI. Một lệnh đọc git của bạn
 
 Không server, không đăng nhập. Mọi con số được tính ngay trên máy bạn. Riêng `last`/`since` sẽ gửi trích đoạn diff (đã lọc bí mật, bỏ hẳn file `.env`/khóa) cho `claude` cài trên máy bạn để viết bài — giống như bạn dùng Claude Code; thêm `--narrator manual` nếu không muốn gọi AI tự động. `wrapped` không gửi gì đi đâu cả.
 
-## Thử ngay
+## Cần có
+
+- **Node.js 18 trở lên** và **git**. Kiểm tra: `node -v` (ra `v18…` trở lên) và `git --version`. Chưa có thì cài Node bản LTS ở nodejs.org.
+- Một thư mục là **git repo có commit của bạn**.
+- Tuỳ chọn: **Claude Code** (lệnh `claude`) để tự viết devlog. Không có cũng chạy được Wrapped, còn devlog chuyển sang chế độ dán vào chat AI bất kỳ.
+
+Chạy được trên Windows (PowerShell), macOS và Linux.
+
+## Chạy lần đầu (5 phút)
+
+**1. Mở terminal ở thư mục repo của bạn**
+
+```powershell
+# Windows PowerShell
+cd D:\duong-dan\toi\repo-cua-ban
+```
 
 ```bash
-cd repo-cua-ban
+# macOS / Linux
+cd ~/duong-dan/toi/repo-cua-ban
+```
+
+**2. Tạo trang Wrapped**
+
+```bash
 npx github:longtrandev2/builder-journal wrapped
 ```
 
-Khoảng vài giây sau trình duyệt mở trang Wrapped của repo: dải phim commit, số buổi code, lịch từng ngày, bạn dành thời gian cho gì, giờ code nhiều nhất. Mỗi màn có nút **Tải ảnh** để đăng Facebook.
+Lần đầu npx tải tool về mất khoảng 20 giây, các lần sau nhanh hơn. Nếu máy có log agent, tool hỏi một câu *có cho đọc log để đếm số không* — gõ Enter là đồng ý, `n` là không.
 
-Cài hẳn để gõ ngắn (`bj` là tên tắt):
+**3. Xem kết quả**
+
+Trình duyệt tự mở trang Wrapped. Cuộn xuống để xem từng màn, bấm **Tải ảnh** ở màn nào muốn đăng (ảnh 1080×1350, hợp Facebook), đổi giao diện ở nút tròn góc phải dưới. Terminal cũng in tóm tắt 4 con số và đường dẫn file.
+
+**4. Viết devlog (tuỳ chọn)**
+
+```bash
+npx github:longtrandev2/builder-journal last
+```
+
+Trả lời câu *Kỳ này vấp gì nhất?* (Enter để bỏ qua). Lần đầu ở mỗi repo, tool hỏi có cho gửi trích đoạn diff (đã che bí mật) tới `claude` không — gõ `y` để đồng ý (mặc định là không; khi đó tool chuyển sang chế độ dán vào chat AI). Khoảng 20 giây sau có bản nháp bài đăng in ra màn hình và lưu vào file.
+
+**Cài hẳn để gõ ngắn** — sau đó dùng `bj` thay cho cả dòng `npx …`:
 
 ```bash
 npm i -g github:longtrandev2/builder-journal
 bj wrapped
 ```
+
+## File được tạo ở đâu
+
+| Lệnh | File |
+|---|---|
+| `wrapped` | `<repo>/.journal/wrapped-YYYY-MM-DD.html` và `wrapped-card-YYYY-MM-DD.svg` |
+| `wrapped --all` | `~/.builder-journal/wrapped-YYYY-MM-DD.html` (Windows: `C:\Users\<bạn>\.builder-journal\`) |
+| `wrapped --week` | `<repo>/.journal/weekly-card-YYYY-MM-DD.html` |
+| `last` / `since` | `<repo>/.journal/devlog-YYYY-MM-DD.md` (+ sổ cái `journal.jsonl`) |
+
+Trang HTML là **một file duy nhất, chạy offline**: gửi file, mở bằng trình duyệt nào cũng được. `.journal/` không bao giờ lọt vào commit của bạn.
 
 ## Lệnh
 
@@ -72,9 +116,32 @@ Sổ cái `.journal/journal.jsonl` nhớ đã kể tới commit nào, nên các 
 - **Dòng code đã ship**: dòng thêm vào file mã nguồn (tính cả code agent viết); bỏ qua tài liệu, cấu hình, lockfile, thư mục build và bộ kit agent (`.claude/`, `.opencode/`…).
 - **Giờ làm thật** (khi có log agent): tổng thời gian giữa các hoạt động cách nhau không quá 30 phút.
 
-## Yêu cầu
+## Gặp lỗi?
 
-Node.js 18+, git. Chạy được trên Windows, macOS, Linux.
+| Hiện tượng | Cách xử lý |
+|---|---|
+| `Không thấy commit nào của …` | Tên/email trong git khác với trên commit. Xem tên thật bằng `git log --format="%an <%ae>" -5`, rồi chạy lại với `--author "Tên"` (lặp lại được cho nhiều tên/email), hoặc sửa `authors` trong `.journal/config.json`. |
+| `Thư mục không phải git repo` | `cd` vào đúng thư mục repo, hoặc thêm `--repo "<đường dẫn>"`. Đường dẫn có dấu cách thì để trong ngoặc kép. |
+| Trình duyệt không tự mở | Mở tay file mà terminal in ra (dòng `Trang: …`). Hoặc thêm `--no-open` nếu không muốn mở. |
+| Không có màn AI | Máy không có log Claude Code/Codex trong khoảng 30 ngày, hoặc bạn đã chọn không. Bật lại: thêm `--ai`. |
+| Muốn đổi lựa chọn đồng ý | Đọc log agent: chạy với `--ai` hoặc `--no-ai` (nhớ lựa chọn mới), hoặc xoá `~/.builder-journal/config.json` để được hỏi lại. Gửi diff cho AI: sửa `sendDiffToAi` trong `<repo>/.journal/config.json`. |
+| `Không tìm thấy lệnh claude` / `claude trả lời quá lâu` | Tool tự chuyển sang chế độ thủ công: mở file `.journal/narrator-prompt-*.md`, copy phần dưới đường kẻ, dán vào chat AI bất kỳ, lưu câu trả lời vào `.journal/narrative.md`, rồi chạy lệnh in ra trên màn hình (có `--narrative`). |
+| `Không tìm thấy commit nào trong 21 ngày` | Repo không có commit gần đây — dùng `since 2026-07-01` (mốc bất kỳ) để kể khoảng cũ, hoặc chỉ chạy `wrapped`. |
+| `--all` không có repo nào | Chế độ này tìm repo qua log agent. Thêm repo bằng tay: `--include "D:\repo-a,D:\repo-b"`. |
+| npx chậm hoặc bản cũ | Ghim phiên bản: `npx github:longtrandev2/builder-journal#v0.1.1 wrapped`. |
+
+## Chạy từ mã nguồn
+
+```bash
+git clone https://github.com/longtrandev2/builder-journal.git
+cd builder-journal
+npm install
+node bin/builder-journal.js --help
+node bin/builder-journal.js wrapped --repo "<đường dẫn repo bất kỳ>"
+npm test
+```
+
+Nhánh: `main` = bản phát hành (có tag), `develop` = tích hợp, `feat/*` / `fix/*` mở PR vào `develop`. Commit theo [Conventional Commits](https://www.conventionalcommits.org/). Thay đổi từng bản: [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
