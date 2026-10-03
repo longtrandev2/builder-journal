@@ -50,13 +50,18 @@ export function untoldCount(repo, authors, entry) {
   return out === null ? null : Number(out);
 }
 
-/** Build one ledger line from a told period. */
-export function ledgerEntry({ from, to, commits, stats, outputFile, seeded = false }) {
+/** Topologically newest commit of a list (smallest git-log position), NOT the latest date. */
+export function tipCommit(commits) {
+  return commits.reduce((a, b) => (b.order < a.order ? b : a));
+}
+
+/** Build one ledger line. tipHash = the HEAD the run read up to (exact boundary, no gaps/overlap). */
+export function ledgerEntry({ from, to, commits, stats, outputFile, seeded = false, tipHash }) {
   return {
     date: new Date().toISOString(),
     range_from: from,
     range_to: to,
-    last_commit_hash: commits[commits.length - 1].hash,
+    last_commit_hash: tipHash || tipCommit(commits).hash,
     stats: { sessions: stats.sessions, commits: stats.commits, chapters: stats.chapters },
     output_file: outputFile,
     seeded,

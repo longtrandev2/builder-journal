@@ -65,14 +65,14 @@ export function buildPeriod(repo, options) {
  * Fixed window ending now: start at `days`, widen 7→14→21 while < 3 commits.
  * Zero commits even at 21 days → friendly exit-1 error.
  */
-export function buildFixedWindow(repo, { days, authors, withPatch }) {
+export function buildFixedWindow(repo, { days, authors, withPatch, revRange }) {
   const steps = [...new Set([days, ...WIDEN_STEPS.filter((d) => d > days)])];
   const now = new Date();
   let period = null;
   let usedDays = days;
   for (const d of steps) {
     usedDays = d;
-    period = buildPeriod(repo, { authors, from: new Date(now - d * DAY).toISOString(), withPatch });
+    period = buildPeriod(repo, { authors, from: new Date(now - d * DAY).toISOString(), withPatch, revRange });
     if (period.commits.length >= MIN_COMMITS) break;
   }
   if (!period.commits.length) {

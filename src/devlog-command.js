@@ -83,8 +83,8 @@ export async function runDevlog(opts) {
   fs.writeFileSync(file, post);
   const outputFile = path.relative(repo, file).split(path.sep).join('/');
   appendLedger(repo, plan.backfill
-    ? seededEntries(plan.backfill, outputFile)
-    : ledgerEntry({ from: plan.from, to: plan.to, commits: period.commits, stats: period.stats, outputFile }));
+    ? seededEntries(plan.backfill, outputFile, plan.head)
+    : ledgerEntry({ from: plan.from, to: plan.to, commits: period.commits, stats: period.stats, outputFile, tipHash: plan.head }));
 
   console.log(`\n${'─'.repeat(48)}\n${post}${'─'.repeat(48)}`);
   console.log(`Bản nháp: ${displayPath(file)} — đọc lại, sửa nếu cần, rồi đăng.`);

@@ -25,9 +25,9 @@ export function chunkByWeek(commits, from) {
 }
 
 /** Read the whole range once (stats only). Returns the aggregate period + per-week chunks. */
-export function buildBackfill(repo, { from, authors }) {
+export function buildBackfill(repo, { from, authors, revRange }) {
   const to = new Date().toISOString();
-  const period = buildPeriod(repo, { authors, from, withPatch: false });
+  const period = buildPeriod(repo, { authors, from, withPatch: false, revRange });
   const chunks = chunkByWeek(period.commits, from).map((chunk) => {
     const sessions = groupSessions(chunk.commits);
     return { ...chunk, stats: periodStats(chunk.commits, sessions) };
@@ -35,10 +35,11 @@ export function buildBackfill(repo, { from, authors }) {
   return { ...period, from, to, chunks };
 }
 
-/** Ledger lines for every non-empty week (seeded:true), appended after the devlog is written. */
-export function seededEntries(backfill, outputFile) {
-  return backfill.chunks.map((chunk) =>
-    ledgerEntry({ from: chunk.from, to: chunk.to, commits: chunk.commits, stats: chunk.stats, outputFile, seeded: true }),
+/** Ledger lines for every non-empty week (seeded:true); the last one points at the HEAD read. */
+export function seededEntries(backfill, outputFile, headHash) {
+  const last = backfill.chunks.length - 1;
+  return backfill.chunks.map((chunk, i) =>
+    ledgerEntry({ from: chunk.from, to: chunk.to, commits: chunk.commits, stats: chunk.stats, outputFile, seeded: true, tipHash: i === last ? headHash : undefined }),
   );
 }
 
