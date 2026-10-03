@@ -153,3 +153,21 @@ test('repo discovery: git repos only, deduped by toplevel, exclude by name', asy
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+test('aggregate: promptsBySource, promptDays, activeDays and sub-agent delegations (counts only)', () => {
+  const t = (day, min) => new Date(Date.UTC(2026, 0, day, 3) + min * 60000).toISOString();
+  const ev = (source, kind, ts, extra = {}) => ({ source, kind, ts, project: '/p', sessionId: `${source}-1`, ...extra });
+  const a = aggregateAgentActivity([
+    ev('claude-code', 'prompt', t(1, 0)), ev('claude-code', 'prompt', t(1, 10)), ev('codex', 'prompt', t(2, 0)),
+    ev('claude-code', 'tool', t(1, 5), { tool: 'Task' }), ev('claude-code', 'tool', t(1, 6), { tool: 'Agent' }),
+    ev('claude-code', 'tool', t(1, 7), { tool: 'Edit' }), ev('claude-code', 'tool', t(1, 8), { tool: 'Read' }),
+  ]);
+  assert.deepEqual(a.promptsBySource, { 'claude-code': 2, codex: 1 });
+  assert.equal(a.promptDays, 2);
+  assert.ok(a.activeDays >= 1);
+  assert.equal(a.actions.delegations, 2);
+  assert.equal(a.actions.edits, 1);
+  assert.equal(a.actions.reads, 1);
+  assert.equal(a.actions.commands, 0);
+  assert.equal(a.actions.total, 4);
+});

@@ -2,6 +2,16 @@
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/), version theo [SemVer](https://semver.org/).
 
+## [0.3.0] — 2026-10-04
+
+### Added
+- Bạn đồng hành pixel (Cam / Lệnh / Cú) trên trang Wrapped: đổi dáng theo từng màn, tự chọn theo agent dùng nhiều nhất, đổi tay trong menu giao diện (nhớ lựa chọn). Có mặt trong ảnh PNG tải về.
+- Màn cuối có "Lời nhắn" từ bạn đồng hành: 2–3 câu dựa trên số liệu thật (giờ giấc, chuỗi ngày, tỉ lệ test/fix, lệnh cho agent…) và một câu chúc. Không bao giờ dùng nội dung lệnh.
+- Số liệu mới: tỉ lệ commit khuya và cuối tuần, khoảng nghỉ dài nhất, số ngày từ commit gần nhất, lệnh theo từng agent, số lần giao việc cho subagent.
+
+### Changed
+- "Buổi code" (ước lượng theo khoảng cách giữa các commit) được thay bằng "ngày có mặt" (số ngày có commit, đếm chính xác) trên trang, card và terminal. Bỏ dòng "Buổi dài nhất" ở màn giờ giấc.
+
 ## [0.2.0] — 2026-10-03
 
 ### Removed
@@ -60,6 +70,7 @@ Bản đầu tiên, làm trong buổi build thứ Bảy đầu tiên.
 - Che secret trước khi tạo prompt (key, token, chuỗi kết nối, JWT…); bỏ hẳn diff của `.env*`, khóa, chứng chỉ.
 - Trang share không chứa đường dẫn tuyệt đối, email hay chữ nào từ prompt.
 
+[0.3.0]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.3.0
 [0.2.0]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.2.0
 [0.1.3]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.3
 [0.1.2]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.2

@@ -61,14 +61,31 @@ const DAYPARTS = [
   { id: 'khuya', label: 'Khuya', from: 23, to: 4 },
 ];
 const inPart = (h, p) => (p.from <= p.to ? h >= p.from && h <= p.to : h >= p.from || h <= p.to);
+/** Rest stats over the sorted active-day keys: longest gap (rest days between two active days) and the longest
+ *  stretch (first→last day, inclusive) in which no two active days are more than 1 rest day apart. */
+export function restStats(dayKeys) {
+  const days = [...new Set(dayKeys)].sort().map(utcDay);
+  let longestGapDays = 0;
+  let noRestStretchDays = days.length ? 1 : 0;
+  let start = days[0];
+  for (let i = 1; i < days.length; i++) {
+    const rest = (days[i] - days[i - 1]) / DAY - 1;
+    longestGapDays = Math.max(longestGapDays, rest);
+    if (rest > 1) start = days[i];
+    noRestStretchDays = Math.max(noRestStretchDays, (days[i] - start) / DAY + 1);
+  }
+  return { longestGapDays, noRestStretchDays };
+}
+
+const localKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const WEEKDAYS = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
 
 /**
- * @param period  output of buildPeriod (commits classified, sessions grouped)
- * @param options { unit, repoName, displayName }
+ * @param period  output of periodFromCommits (commits classified)
+ * @param options { unit, repoName, displayName, now }  now = run time (daysSinceLastCommit is measured against it)
  */
-export function aggregateWrapped(period, { unit = 'week', repoName, displayName }) {
-  const { commits, sessions, stats } = period;
+export function aggregateWrapped(period, { unit = 'week', repoName, displayName, now = new Date() }) {
+  const { commits, stats } = period;
   const first = commits[0].date;
   const last = commits[commits.length - 1].date;
   const t0 = Date.parse(first);
@@ -87,15 +104,15 @@ export function aggregateWrapped(period, { unit = 'week', repoName, displayName 
     buckets[b] = (buckets[b] || 0) + 1;
   }
   const peakHour = hours.indexOf(Math.max(...hours));
+  const nightHours = hours.slice(0, 5).reduce((s, n) => s + n, 0); // 0h–4h
   const dayparts = DAYPARTS.map((p) => ({ ...p, count: hours.filter((_, h) => inPart(h, p)).reduce((s, n) => s + n, 0) }));
-  const longestSession = sessions.reduce((a, b) => (b.durationMinutes > a.durationMinutes ? b : a));
 
   return {
     repoName,
     displayName,
     unit,
     range: { from: first, to: last, days: Math.round(span / DAY) + 1 },
-    hero: { sessions: stats.sessions, commits: stats.commits, merges: stats.merges || 0, chapters: stats.chapterCount, codeLines: stats.codeLines },
+    hero: { activeDays: Object.keys(perDay).length, commits: stats.commits, merges: stats.merges || 0, chapters: stats.chapterCount, codeLines: stats.codeLines },
     // Ticks deduped at 0.1% resolution: same picture, ≤1001 lines even for a 5000-commit repo.
     ticks: [...new Set(commits.map((c) => Math.round(((Date.parse(c.date) - t0) / span) * 1000) / 1000))],
     heatmap: buildHeatmap(perDay),
@@ -116,9 +133,12 @@ export function aggregateWrapped(period, { unit = 'week', repoName, displayName 
       dayparts,
       topDaypart: dayparts.reduce((a, b) => (b.count > a.count ? b : a)),
       streak: longestStreak(Object.keys(perDay)),
-      longestSessionMinutes: longestSession.durationMinutes,
-      longestSessionDay: dayKey(longestSession.start),
       busiestWeekday: WEEKDAYS[weekdays.indexOf(Math.max(...weekdays))],
+      busiestWeekdayIndex: weekdays.indexOf(Math.max(...weekdays)), // 0 = Chủ nhật
+      nightShare: nightHours / commits.length,
+      weekendShare: (weekdays[0] + weekdays[6]) / commits.length,
+      ...restStats(Object.keys(perDay)),
+      daysSinceLastCommit: Math.max(0, Math.round((utcDay(localKey(now)) - utcDay(dayKey(last))) / DAY)),
     },
   };
 }

@@ -143,9 +143,9 @@ export function wrappedPageClient() {
     });
   }
 
-  $$('.themes button').forEach((b) => b.addEventListener('click', () => {
+  $$('.themes button[data-set]').forEach((b) => b.addEventListener('click', () => {
     root.dataset.theme = b.dataset.set;
-    $$('.themes button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    $$('.themes button[data-set]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
   }));
   const copy = document.getElementById('copy');
   if (copy) copy.addEventListener('click', () => {

@@ -5,13 +5,17 @@ import { PALETTES, baseCss, themeSwitcherHtml } from './wrapped-theme-styles.js'
 import { fontFaceCss, animeJs, htmlToImageJs } from './wrapped-vendor-assets.js';
 import { wrappedPageClient } from './wrapped-page-client-script.js';
 import { pngExportClient } from './png-export-client-script.js';
+import { companionClient } from './companion-client-script.js';
+import { createSpriteKit } from './companion-sprites.js';
+import { COMPANION_STORAGE_KEY } from './companion-markup.js';
 
 export const safeTheme = (theme) => (PALETTES[theme] ? theme : 'dem');
 
 /**
- * @param page { title, theme, css, body, lang? }  css = page-specific CSS appended after the base.
+ * @param page { title, theme, css, body, companion? }  css = page-specific CSS appended after the base;
+ *   companion = companionMarkup() output: adds the sprite, the picker in the theme dock and their script.
  */
-export function renderPageShell({ title, theme, css = '', body }) {
+export function renderPageShell({ title, theme, css = '', body, companion }) {
   const active = safeTheme(theme);
   return `<!DOCTYPE html>
 <html lang="vi" data-theme="${active}" class="snap">
@@ -25,10 +29,11 @@ export function renderPageShell({ title, theme, css = '', body }) {
 </head>
 <body>
 ${body}
-${themeSwitcherHtml(active)}
+${themeSwitcherHtml(active, companion ? companion.dockHtml : '')}
+${companion ? companion.buddyHtml : ''}
 <script>${animeJs()}</script>
 <script>${htmlToImageJs()}</script>
-<script>(${wrappedPageClient.toString()})();(${pngExportClient.toString()})();</script>
+<script>(${wrappedPageClient.toString()})();(${pngExportClient.toString()})();${companion ? `(${companionClient.toString()})((${createSpriteKit.toString()})(), ${JSON.stringify(COMPANION_STORAGE_KEY)});` : ''}</script>
 </body>
 </html>
 `;

@@ -49,6 +49,8 @@ export function periodStats(commits, sessions) {
   return {
     sessions: sessions.length,
     commits: commits.length,
+    // Days with at least one commit (author's own calendar day) — exact, unlike time-gap "sessions".
+    activeDays: new Set(commits.map((c) => String(c.date).slice(0, 10))).size,
     merges: commits.length - work.length,
     chapters: Object.fromEntries(Object.entries(chapters).sort((a, b) => b[1] - a[1])),
     chapterCount: Object.keys(chapters).length,

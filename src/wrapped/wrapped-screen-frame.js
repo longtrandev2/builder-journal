@@ -12,12 +12,12 @@ export function downloadButton(label = 'Tải ảnh') {
 }
 
 /**
- * @param spec  { id, kicker, icon, moment, body }
+ * @param spec  { id, kicker, icon, moment, body, pose? }  pose = companion pose while this screen is current
  * @param ctx   { title, owner, index, total, slug }
  */
 export function frameScreen(spec, ctx) {
   const file = `${ctx.slug}-${String(ctx.index).padStart(2, '0')}-${spec.id}.png`;
-  return `<section class="screen s-${spec.id}" id="${spec.id}" data-moment="${spec.moment}" data-export-root data-export-width="540" data-export-name="${e(file)}" aria-label="${e(spec.kicker)}">
+  return `<section class="screen s-${spec.id}" id="${spec.id}" data-moment="${spec.moment}" data-export-root data-export-width="540" data-export-name="${e(file)}"${spec.pose ? ` data-pose="${e(spec.pose)}"` : ''} aria-label="${e(spec.kicker)}">
 <header class="head"><p class="kicker">${icon(spec.icon)}<span>${e(spec.kicker)}</span></p>${downloadButton()}</header>
 <div class="body">${spec.body}</div>
 <footer class="foot"><span>${e(ctx.owner)}</span><span class="num">${fmtNum(ctx.index)}/${fmtNum(ctx.total)}</span></footer>

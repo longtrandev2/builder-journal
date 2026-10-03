@@ -81,7 +81,7 @@ function includedRepos(include) {
 
 /**
  * Person scope: merge commits of every discovered repo, regroup sessions across repos
- * (a "buổi" is about the person's time, not the repo).
+ * (timeline and active days are about the person, not the repo).
  */
 export async function buildPersonPeriod({ authors, from, exclude = [], include = [], activityAll, confirm = async (r) => r }) {
   const extra = includedRepos(include);
@@ -106,7 +106,7 @@ export async function buildPersonPeriod({ authors, from, exclude = [], include =
     if (!r || !r.p.commits.length) continue;
     for (const c of r.p.commits) c.repo = r.repo.name;
     merged.push(...r.p.commits);
-    perRepo.push({ name: r.repo.name, path: r.repo.path, commits: r.p.stats.commits, sessions: r.p.stats.sessions, codeLines: r.p.stats.codeLines });
+    perRepo.push({ name: r.repo.name, path: r.repo.path, commits: r.p.stats.commits, activeDays: r.p.stats.activeDays, codeLines: r.p.stats.codeLines });
   }
   if (!merged.length) throw new UserFacingError(`Không thấy commit nào của ${authors.join(' / ')} trong các repo tìm được.`);
   merged.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
@@ -124,7 +124,7 @@ export function shareSafe(ai, repos) {
     ...aiRest,
     projects: (ai.projects || []).map(({ name, prompts, activeMinutes, lastActive }) => ({ name, prompts, activeMinutes, lastActive })),
   };
-  const safeRepos = repos && repos.map(({ name, commits, sessions, codeLines }) => ({ name, commits, sessions, codeLines }));
+  const safeRepos = repos && repos.map(({ name, commits, activeDays, codeLines }) => ({ name, commits, activeDays, codeLines }));
   return { ai: safeAi, repos: safeRepos };
 }
 
