@@ -112,7 +112,7 @@ Sổ cái `.journal/journal.jsonl` nhớ đã kể tới commit nào, nên các 
 ## Cách đếm
 
 - **Buổi**: chuỗi commit cách nhau không quá 2 giờ.
-- **Mảng việc** (tính năng, sửa lỗi, dọn code, kiểm thử, tài liệu, hạ tầng): commit có tiền tố [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix(api):`, `refactor!:`, `docs:`, `test:`, `chore:`/`ci:`/`build:`…) được phân loại theo tiền tố; commit không có tiền tố thì theo hình dạng diff (file mới, đổi tên, tỉ lệ thêm/xoá, loại file). Message tự do như "update" không dùng để phân loại. Trang ghi rõ bao nhiêu % theo mỗi cách.
+- **Mảng việc** (tính năng, sửa lỗi, dọn code, kiểm thử, tài liệu, hạ tầng): commit có tiền tố [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix(api):`, `refactor!:`, `docs:`, `test:`, `ci:`/`build:`…) được phân loại theo tiền tố (`chore:` là việc vặt chung chung nên để diff quyết định); commit không có tiền tố thì theo hình dạng diff (file mới, đổi tên, tỉ lệ thêm/xoá, loại file). Message tự do như "update" không dùng để phân loại. Trang ghi rõ bao nhiêu % theo mỗi cách.
 - **Dòng code đã ship**: dòng thêm vào file mã nguồn (tính cả code agent viết); bỏ qua tài liệu, cấu hình, lockfile, thư mục build và bộ kit agent (`.claude/`, `.opencode/`…).
 - **Giờ làm thật** (khi có log agent): tổng thời gian giữa các hoạt động cách nhau không quá 30 phút.
 
