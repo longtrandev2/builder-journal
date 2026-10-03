@@ -2,6 +2,21 @@
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/), version theo [SemVer](https://semver.org/).
 
+## [0.2.0] — 2026-10-03
+
+### Removed
+- Devlog (`last`, `since`, `status`) — sản phẩm tập trung vào Wrapped. Tool giờ **không gửi dữ liệu đi đâu**.
+- Câu "bảo agent làm lại N lần" (đếm theo từ khoá, không đủ tin cậy).
+
+### Added
+- `bj update`: cập nhật lên bản mới nhất (`npm i -g builder-journal@latest`).
+- README: mục Cập nhật.
+
+### Changed
+- Số commit **tính cả merge commit**; trang ghi rõ có bao nhiêu merge. Merge không có diff riêng nên không xếp mảng việc và không cộng dòng code.
+- Trang cuối, card SVG và card tuần hiện lệnh cài npm: `npm i -g builder-journal`, rồi `bj wrapped`.
+- Nhanh hơn: log agent chỉ đọc một lần, dò repo và đọc git song song (tối đa 8 tiến trình) — `wrapped --all` từ ~16 giây còn ~6 giây.
+
 ## [0.1.3] — 2026-10-03
 
 ### Added
@@ -45,6 +60,7 @@ Bản đầu tiên, làm trong buổi build thứ Bảy đầu tiên.
 - Che secret trước khi tạo prompt (key, token, chuỗi kết nối, JWT…); bỏ hẳn diff của `.env*`, khóa, chứng chỉ.
 - Trang share không chứa đường dẫn tuyệt đối, email hay chữ nào từ prompt.
 
+[0.2.0]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.2.0
 [0.1.3]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.3
 [0.1.2]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.2
 [0.1.1]: https://github.com/longtrandev2/builder-journal/releases/tag/v0.1.1

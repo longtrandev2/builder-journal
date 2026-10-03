@@ -1,6 +1,6 @@
 {
   "name": "builder-journal",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Wrapped cho builder thời AI: đọc git và log agent trên máy bạn, ra trang HTML để xem và tải ảnh. Chạy hoàn toàn local.",
   "type": "module",
   "bin": {
