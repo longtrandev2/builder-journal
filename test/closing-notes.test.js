@@ -113,3 +113,11 @@ test('notes never carry prompt text or anything but numbers, dates and day-part 
   for (const v of Object.values(stats)) assert.ok(typeof v === 'number' || /^(\d\d\/\d\d|sang|chieu|toi|khuya)$/.test(v), `unexpected stat value ${v}`);
   assert.doesNotMatch(JSON.stringify(pickNotes(stats, SEED)), /SECRET/);
 });
+
+test('F1 second half follows the ship hour (catalog wording)', () => {
+  const f1 = (a, b) => pickNotes({ peakPromptHour: a, peakShipHour: b }, SEED).lines.find((l) => l.id === 'F1')?.text;
+  assert.match(f1(15, 23), /Bạn ra lệnh lúc 15h nhưng ship lúc 23h\. Agent làm ca ngày, bạn chốt ca đêm\./);
+  assert.match(f1(2, 9), /Đêm agent làm, sáng bạn gom lại ship\./);
+  assert.match(f1(9, 15), /Hai ca lệch nhau mà vẫn ăn ý\./);
+  assert.equal(f1(10, 12), undefined, 'gap < 4h stays silent');
+});

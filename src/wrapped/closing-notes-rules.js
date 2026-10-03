@@ -10,6 +10,10 @@ export const has = (...v) => v.every((x) => x !== undefined && x !== null);
 const pct = (p) => Math.round(p * 100);
 const halfHours = (m) => fmtDecimal(Math.round(m / 30) / 2);
 const hourGap = (a, b) => { const d = Math.abs(a - b) % 24; return Math.min(d, 24 - d); };
+const isNight = (h) => h >= 22 || h <= 4;
+// F1 second half, by the ship hour's time of day (catalog); "ca ngày" / "đêm agent làm" only when the prompt hour agrees.
+const f1Tail = (a, b) => (isNight(b) && !isNight(a) ? 'Agent làm ca ngày, bạn chốt ca đêm.'
+  : b >= 5 && b <= 11 && isNight(a) ? 'Đêm agent làm, sáng bạn gom lại ship.' : 'Hai ca lệch nhau mà vẫn ăn ý.');
 
 // g = group index, p = priority (higher = stronger match), when = predicate, vars = template values, say = variants.
 export const NOTE_RULES = [
@@ -58,8 +62,7 @@ export const NOTE_RULES = [
     say: ['Hơn {p}% là merge. Quy trình nhánh chuẩn chỉ ghê.'] },
   // F1 compares prompt hour with the ship hour measured INSIDE the agent-log window (same days on both sides).
   { id: 'F1', g: 3, p: 70, when: (s) => has(s.peakPromptHour, s.peakShipHour) && hourGap(s.peakPromptHour, s.peakShipHour) >= 4,
-    vars: (s) => ({ a: s.peakPromptHour, b: s.peakShipHour, tail: (s.peakShipHour >= 22 || s.peakShipHour <= 4) && s.peakPromptHour >= 12 && s.peakPromptHour < 22
-      ? 'Agent làm ca chiều, bạn chốt ca đêm.' : 'Lệnh một ca, ship một ca. Nhịp riêng của bạn.' }),
+    vars: (s) => ({ a: s.peakPromptHour, b: s.peakShipHour, tail: f1Tail(s.peakPromptHour, s.peakShipHour) }),
     say: ['Bạn ra lệnh lúc {a}h nhưng ship lúc {b}h. {tail}'] },
   { id: 'F2', g: 3, p: 40, when: (s) => s.topWeekday === 1, vars: () => ({}), say: ['Thứ Hai là ngày năng suất nhất của bạn. Hiếm người được vậy.'] },
   { id: 'F3', g: 3, p: 40, when: (s) => s.topWeekday === 5, vars: () => ({}), say: ['Thứ Sáu vẫn ship đều. Gan dạ đấy.'] },
