@@ -1,12 +1,20 @@
 #!/usr/bin/env node
 // CLI entry: wrapped / last / since / status. Commands load lazily to keep `--help` instant.
-import { Command } from 'commander';
+import { Command, InvalidArgumentError } from 'commander';
 import { createRequire } from 'node:module';
 
 const pkg = createRequire(import.meta.url)('../package.json');
 const program = new Command();
 
 const collect = (value, list) => list.concat(value);
+
+/** --narrator-timeout: whole milliseconds > 0, otherwise a friendly VN error (never NaN → instant timeout). */
+function parseTimeoutMs(value) {
+  if (!/^\d+$/.test(String(value).trim()) || Number(value) <= 0) {
+    throw new InvalidArgumentError('phải là số nguyên dương (mili-giây), ví dụ 180000.');
+  }
+  return Number(value);
+}
 
 /** Run a command; friendly VN errors exit with their code, real bugs print the stack. */
 async function run(load, opts) {
@@ -15,7 +23,7 @@ async function run(load, opts) {
     await mod(opts);
   } catch (err) {
     if (err && typeof err.exitCode === 'number') {
-      console.error(`✖ ${err.message}`);
+      console.error(`Lỗi: ${err.message}`);
       process.exitCode = err.exitCode;
     } else {
       console.error(err);
@@ -34,13 +42,14 @@ function devlogOptions(cmd) {
     .option('--hardest <text>', 'trả lời trước câu "Vấp gì nhất?" ("" = bỏ qua)')
     .option('--narrator <mode>', 'claude | manual', 'claude')
     .option('--narrative <file>', 'dùng bài AI đã viết sẵn (chế độ thủ công)')
-    .option('--narrator-timeout <ms>', 'giới hạn thời gian chờ claude', (v) => Number(v), 180000)
-    .option('--extract-only', 'chỉ trích xuất số liệu, không viết bài');
+    .option('--narrator-timeout <ms>', 'giới hạn thời gian chờ claude', parseTimeoutMs, 180000)
+    .option('--extract-only', 'chỉ trích xuất số liệu, không viết bài')
+    .option('-y, --yes', 'đồng ý gửi diff (đã che secret) cho claude ở repo này, không hỏi');
 }
 
 program
   .name('builder-journal')
-  .description('Biến git thành Wrapped kiểu Spotify + devlog tiếng Việt. Local-first, không gửi dữ liệu đi đâu.')
+  .description('Biến git thành Wrapped kiểu Spotify + devlog tiếng Việt. Số liệu tính trên máy bạn; last/since gửi trích đoạn diff cho claude trên máy bạn (như khi dùng Claude Code), trừ khi --narrator manual; wrapped không gửi gì.')
   .version(pkg.version);
 
 program
@@ -51,6 +60,15 @@ program
   .option('--since <when>', 'chỉ lấy từ mốc: 90d hoặc 2026-03-01')
   .option('--theme <name>', 'đêm | bình-minh | giấy')
   .option('--unit <unit>', 'week | month | quarter')
+  .option('--all', 'Wrapped của bạn: mọi repo tìm thấy trong log agent (Claude Code / Codex)')
+  .option('--exclude <names>', 'bỏ repo khỏi --all (tên hoặc đường dẫn, phân cách dấu phẩy)', collect, [])
+  .option('--include <paths>', 'thêm repo vào --all (đường dẫn, phân cách dấu phẩy)', collect, [])
+  .option('--week', 'card 1 màn cho 7 ngày gần nhất (đi kèm devlog tuần)')
+  .option('--hardest <text>', 'dòng "vấp thật" trên card tuần')
+  .option('--ai', 'đọc log agent (Claude Code / Codex) — chỉ số tổng, nhớ lựa chọn')
+  .option('--no-ai', 'không đọc log agent (chỉ dùng git), nhớ lựa chọn')
+  .option('--hide-names', 'ẩn tên repo trên trang (Repo A, Repo B…)')
+  .option('-y, --yes', 'không hỏi: đồng ý đọc log agent, giữ mọi repo')
   .option('--no-open', 'không tự mở trình duyệt')
   .action((opts) => run(() => import('../src/wrapped/wrapped-command.js').then((m) => m.runWrapped), opts));
 

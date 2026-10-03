@@ -51,9 +51,15 @@ export function loadConfig(repo) {
     if (!UNITS.includes(config.unit)) config.unit = 'week';
     return { config, created: false, file };
   } catch {
-    console.warn(`⚠ ${file} hỏng JSON — tạm dùng mặc định.`);
+    console.warn(`${file} hỏng JSON — tạm dùng mặc định.`);
     return { config: defaultConfig(repo), created: false, file };
   }
+}
+
+/** Persist the repo config (e.g. remembered consent). */
+export function saveConfig(repo, config) {
+  ensureJournal(repo);
+  fs.writeFileSync(journalFile(repo, 'config.json'), JSON.stringify(config, null, 2) + '\n');
 }
 
 /** --author flag(s) override config authors entirely. */

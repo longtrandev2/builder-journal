@@ -11,9 +11,10 @@ import { appendLedger, ledgerEntry } from './ledger/journal-ledger.js';
 import { seededEntries } from './extractor/backfill-seeder.js';
 import { resolvePeriod, NOTHING_NEW } from './devlog-period-resolver.js';
 import { askHardest } from './narrator/preflight.js';
+import { ensureNarratorConsent } from './lib/user-consent.js';
 import { buildPrompt, parseNarrative } from './narrator/prompt-builder.js';
 import { runClaude, REASON_TEXT } from './narrator/claude-runner.js';
-import { writePromptFile, printFallbackHelp, readNarrativeFile } from './narrator/manual-fallback.js';
+import { writePromptFile, printFallbackHelp, readNarrativeFile, writePending, clearPending } from './narrator/manual-fallback.js';
 import { renderVnCasual } from './template/vn-casual-template.js';
 
 /** devlog-YYYY-MM-DD.md, or -2, -3… when several runs happen on the same day. */
@@ -30,7 +31,14 @@ function rerunCommand(opts, repo) {
   return opts.repo ? `${cmd} --repo "${repo}"` : cmd;
 }
 
-async function narrate(opts, repo, prompt) {
+/** Manual fallback: save the prompt AND which head it was built from (the --narrative rerun reads up to it). */
+function saveManualPrompt(opts, repo, prompt, rerun, plan, authors, reason) {
+  const files = writePromptFile(repo, prompt, rerun);
+  writePending(repo, { head: plan.head, mode: opts.mode, when: opts.when, authors });
+  printFallbackHelp(files, rerun, reason);
+}
+
+async function narrate(opts, repo, prompt, plan, authors) {
   if (opts.narrative) return { text: readNarrativeFile(path.resolve(opts.narrative)) };
   const rerun = rerunCommand(opts, repo);
   if (opts.narrator !== 'manual') {
@@ -38,10 +46,10 @@ async function narrate(opts, repo, prompt) {
     const res = await runClaude(prompt, opts.narratorTimeout);
     process.stdout.write('\n');
     if (res.ok) return { text: res.text };
-    printFallbackHelp(writePromptFile(repo, prompt, rerun), rerun, REASON_TEXT[res.reason] || res.reason);
+    saveManualPrompt(opts, repo, prompt, rerun, plan, authors, REASON_TEXT[res.reason] || res.reason);
     return null;
   }
-  printFallbackHelp(writePromptFile(repo, prompt, rerun), rerun);
+  saveManualPrompt(opts, repo, prompt, rerun, plan, authors);
   return null;
 }
 
@@ -75,16 +83,23 @@ export async function runDevlog(opts) {
     weekly: plan.weekly,
     hardest,
   });
-  const answer = await narrate(opts, repo, prompt);
+  // Diff excerpts leave the machine only with this repo's remembered consent; otherwise manual mode.
+  const useClaude = opts.narrative || opts.narrator === 'manual' ? true : await ensureNarratorConsent(repo, config, opts);
+  const answer = await narrate(useClaude ? opts : { ...opts, narrator: 'manual' }, repo, prompt, plan, authors);
   if (!answer) return;
 
   const post = renderVnCasual({ repo, from: plan.from, to: plan.to, stats: period.stats, narrative: parseNarrative(answer.text), hardest });
   const file = uniqueDevlogFile(repo);
   fs.writeFileSync(file, post);
   const outputFile = path.relative(repo, file).split(path.sep).join('/');
-  appendLedger(repo, plan.backfill
-    ? seededEntries(plan.backfill, outputFile, plan.head)
-    : ledgerEntry({ from: plan.from, to: plan.to, commits: period.commits, stats: period.stats, outputFile, tipHash: plan.head }));
+  // Only `last` (and the very first run / seeding an empty ledger) moves the boundary; a `since` on a
+  // non-empty ledger is a retelling — the devlog is written, the ledger stays put (note already printed).
+  if (!plan.retell) {
+    appendLedger(repo, plan.backfill
+      ? seededEntries(plan.backfill, outputFile, plan.head, authors)
+      : ledgerEntry({ from: plan.from, to: plan.to, commits: period.commits, stats: period.stats, outputFile, tipHash: plan.head, authors }));
+  }
+  clearPending(repo, opts); // a finished devlog makes this command's saved manual-prompt boundary obsolete
 
   console.log(`\n${'─'.repeat(48)}\n${post}${'─'.repeat(48)}`);
   console.log(`Bản nháp: ${displayPath(file)} — đọc lại, sửa nếu cần, rồi đăng.`);
